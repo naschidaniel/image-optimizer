@@ -126,3 +126,21 @@ fn main() {
     let diff = end_time - start_time;
     println!("Total time {} in Seconds", diff.num_seconds());
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_resize_images() {
+        let media = String::from("./media");
+        let testdata = String::from("./testdata");
+        let suffix = String::from("sm");
+        let width = 500;
+        let quality = 90;
+        resize_images(&media, &testdata, &suffix, &width, &quality);
+        let img_ok = image::open("./testdata/test_ok_fly_sm.JPG").expect("Opening image failed");
+        let img = image::open("./testdata/media/fly_sm.JPG").expect("Opening image failed");
+        assert_eq!(img_ok, img);
+    }
+}
