@@ -27,5 +27,5 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: target/release/image-optimizer
           asset_name: image-optimizer-linux-amd64
-          tag: ${{ steps.bump_version.outputs.new_tag }}
+          tag: ${{ github.ref }}
           overwrite: true
