@@ -18,9 +18,17 @@ cargo run ./media ./testdata sm 500 90
 
 ### Original File
 
+- Width: 4000 px
+- Hight: 3000 px
+- Size: 2,3 MB
+
 ![Original](./media/fly.JPG)
 
 ### Optimized File
+
+- Width: 500 px
+- Hight: 375 px
+- Size: 75,6 kb
 
 ![Converted File](./testdata/test_ok_fly_sm.JPG)
 
