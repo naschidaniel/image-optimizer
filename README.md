@@ -1,3 +1,7 @@
+![[build]](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml/badge.svg?name=release) 
+![[rsaudit]](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsaudit.yml/badge.svg?name=rsaudit) 
+![[rstest]](https://github.com/naschidaniel/image-optimizer/actions/workflows/rstest.yml/badge.svg?name=rstest)
+
 # image-optimizer
 
 A small tool to optimise images for web applications. The tool is written in Rust. 
