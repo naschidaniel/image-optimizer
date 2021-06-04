@@ -1,4 +1,4 @@
-name: Build and Release
+name: release
 
 on:
   push:
@@ -7,11 +7,13 @@ on:
 
 jobs:
   release:
-    name: Build and Release
+    name: release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
       - name: Build project
         run: cargo build --release --locked
       - name: Bump version and push tag
@@ -19,8 +21,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WITH_V: true
+        id: bump_version
       - name: Upload binary to release
-        uses: svenstaro/upload-release-action@v1-release
+        uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: target/release/image-optimizer
