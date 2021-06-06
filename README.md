@@ -1,4 +1,6 @@
-![[release-linux]](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml/badge.svg?name=release-linux) 
+![[release-linux]](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml/badge.svg?name=release?job=release-linux) 
+![[release-windows]](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml/badge.svg?name=release?job=release-windows) 
+![[release-macos]](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml/badge.svg?name=release?job=release-macos) 
 ![[rsaudit]](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsaudit.yml/badge.svg?name=rsaudit) 
 ![[rstest]](https://github.com/naschidaniel/image-optimizer/actions/workflows/rstest.yml/badge.svg?name=rstest)
 
@@ -8,20 +10,29 @@ A small tool to optimise images for web applications. The tool is written in Rus
 
 ## Get the latest release of the image-optimizer
 
-```
-# Linux
-wget -c https://github.com/naschidaniel/image-optimizer/releases/download/main/image-optimizer-linux-amd64 -O image-optimizer
-```
-The following command line arguments are required: {inputfolder} {outputfolder} {sufix} {width} {quality}.
+The required binary for the platform can be downloaded from [Releases: Main](https://github.com/naschidaniel/image-optimizer/releases/tag/main).
 
-The following commands optimise all `*.jpg` and `*.png` files in the `./media` folder. In this example, the file `./testdata/media/fly_sm.JPG` will be created with the width of `500 px` and the quality parameter of `90`.
+```
+# Linux 
+curl https://github.com/naschidaniel/image-optimizer/releases/download/main/image-optimizer-linux -O image-optimizer
+
+# Windows
+curl https://github.com/naschidaniel/image-optimizer/releases/download/main/image-optimizer-windows -O image-optimizer
+
+# MacOs
+curl https://github.com/naschidaniel/image-optimizer/releases/download/main/image-optimizer-macos -O image-optimizer
+```
+
+The following command line arguments are required: {inputfolder} {outputfolder} {sufix} {width} {quality}.
 
 ```
 ./image-optimizer ./media ./testdata sm 500 90
 ```
 
-## Development
+The command has optimised all `*.jpg` and `*.png` files in the `./media` folder. In this example, the file `./testdata/media/fly_sm.JPG` was created with the width of `500 px` and the quality of `90`.
 
+
+## Development
 
 ```
 cargo test
@@ -46,10 +57,6 @@ cargo run ./media ./testdata sm 500 90
 
 ![Converted File](./testdata/test_ok_fly_sm.JPG)
 
-## Build for Production
-```
-cargo build --release
-```
 
 ## License
 

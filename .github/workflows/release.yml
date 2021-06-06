@@ -81,7 +81,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
-      - name: Rust build for Windows
+      - name: Rust build for MacOs
         uses: actions-rs/cargo@v1
         with:
           command: build
@@ -91,6 +91,6 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: target/release/image-optimizer
-          asset_name: image-optimizer-darwin
+          asset_name: image-optimizer-macow
           tag: ${{ github.ref }}
           overwrite: true
