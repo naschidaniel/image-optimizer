@@ -14,18 +14,13 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: '0'
-      - name: Build project
-        run: cargo build --release --locked
-      - name: Bump version and push tag
-        uses: anothrNick/github-tag-action@1.26.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WITH_V: true
+      - name: Build for Linux
+        run: cargo build --target x86_64-unknown-linux-musl --release --locked
       - name: Upload binary to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/release/image-optimizer
+          file: target/x86_64-unknown-linux-musl/release/image-optimizer
           asset_name: image-optimizer-linux-amd64
           tag: ${{ github.ref }}
           overwrite: true
