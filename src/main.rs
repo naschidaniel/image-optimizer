@@ -55,22 +55,24 @@ fn encode_image(
 
 fn create_filename_new_path(
     filename_path: &PathBuf,
-    dist_folder: &String,
+    input_folder: &String,
+    output_folder: &String,
     suffix: &String,
 ) -> PathBuf {
-    let folder = filename_path.parent().unwrap();
+    let input_folder_pattern = input_folder.strip_prefix("./").unwrap();
+    let input_sub_folders = filename_path.parent().unwrap().strip_prefix(input_folder_pattern).unwrap();
     let filename = filename_path.file_name().unwrap().to_str().unwrap();
     let file_stem = filename_path.file_stem().unwrap().to_str().unwrap();
     let file_stem_new = format!("{}_{}", file_stem, suffix);
     let filename_new = filename.to_owned().replace(file_stem, &*file_stem_new);
-    let dist_media_path = Path::new(dist_folder).join(folder);
-    fs::create_dir_all(&dist_media_path).unwrap();
-    dist_media_path.join(filename_new)
+    let output_path = Path::new(output_folder).join(input_sub_folders);
+    fs::create_dir_all(&output_path).unwrap();
+    output_path.join(filename_new)
 }
 
 fn resize_images(
-    media_path: &String,
-    dist_folder: &String,
+    input_folder: &String,
+    output_folder: &String,
     suffix: &String,
     width: &u32,
     quality: &u8,
@@ -80,9 +82,9 @@ fn resize_images(
     require_literal_separator: false,
     require_literal_leading_dot: false,
 };
-    let pattern_jpg = format!("{}/**/*.jpg", media_path);
-    let pattern_jpeg = format!("{}/**/*.jpeg", media_path);
-    let pattern_png = format!("{}/**/*.png", media_path);
+    let pattern_jpg = format!("{}/**/*.jpg", input_folder);
+    let pattern_jpeg = format!("{}/**/*.jpeg", input_folder);
+    let pattern_png = format!("{}/**/*.png", input_folder);
 
     for entry in glob_with(&pattern_jpg, options)
         .unwrap()
@@ -92,7 +94,7 @@ fn resize_images(
         match entry {
             Ok(filename_path) => {
                 let filename_new_path =
-                    create_filename_new_path(&filename_path, dist_folder, suffix);
+                    create_filename_new_path(&filename_path, input_folder, output_folder, suffix);
                 let handle = encode_image(filename_path, &filename_new_path, width, quality);
                 match handle {
                     Ok(_) => println!(
@@ -115,9 +117,9 @@ fn main() {
 
     let width = &args[4].parse().unwrap();
     let quality = &args[5].parse().unwrap();
-    println!("Folder: {}", &args[1]);
-    println!("Folder: {}", &args[2]);
-    println!("filename_suffix: {}", &args[3]);
+    println!("Input Folder: {}", &args[1]);
+    println!("Output Folder: {}", &args[2]);
+    println!("Filename Suffix: {}", &args[3]);
     println!("Width {}", width);
     println!("Quality {}", width);
 
@@ -140,7 +142,7 @@ mod tests {
         let quality = 90;
         resize_images(&media, &testdata, &suffix, &width, &quality);
         let img_ok = image::open("./testdata/test_ok_fly_sm.JPG").expect("Opening image failed");
-        let img = image::open("./testdata/media/fly_sm.JPG").expect("Opening image failed");
+        let img = image::open("./testdata/paradise/fly_sm.JPG").expect("Opening image failed");
         assert_eq!(img_ok, img);
     }
 }

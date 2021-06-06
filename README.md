@@ -27,7 +27,7 @@ The following command line arguments are required: {inputfolder} {outputfolder} 
 ./image-optimizer ./media ./testdata sm 500 90
 ```
 
-The command has optimised all `*.jpg` and `*.png` files in the `./media` folder. In this example, the file `./testdata/media/fly_sm.JPG` was created with the width of `500 px` and the quality of `90`.
+The command has optimised all `*.jpg` and `*.png` files in the `./media` folder. In this example, the file `./testdata/paradise/fly_sm.JPG` was created with the width of `500 px` and the quality of `90`.
 
 
 ## Development
@@ -45,7 +45,7 @@ cargo run ./media ./testdata sm 500 90
 - Hight: 3000 px
 - Size: 2,3 MB
 
-![Original](./media/fly.JPG)
+![Original](./media/paradise/fly.JPG)
 
 ### Optimized File
 
