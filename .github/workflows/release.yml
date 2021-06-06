@@ -33,7 +33,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/x86_64-unknown-linux-gnu/release/image-optimizer
+          file: /home/runner/work/image-optimizer/image-optimizer
           asset_name: image-optimizer-linux-amd64
           tag: ${{ github.ref }}
           overwrite: true
