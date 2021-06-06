@@ -1,3 +1,10 @@
+# Pictures
 /dist
-/target
 /testdata/media/*
+
+# Rust build artifacts
+/target
+
+# Bin
+image-optimizer
+image-optimizer.exe
