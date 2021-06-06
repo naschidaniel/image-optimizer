@@ -7,13 +7,10 @@ on:
 
 jobs:
   release-linux:
-    name: release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-        with:
-          fetch-depth: '0'
       - name: Install stable rust toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -33,7 +30,33 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: /home/runner/work/image-optimizer/image-optimizer
+          file: target/release/image-optimizer
           asset_name: image-optimizer-linux-amd64
-          tag: ${{ github.ref }}
+          overwrite: true
+  
+  release-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Install stable rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: Rust check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+      - name: Rust build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --all-features
+      - name: Upload binary to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/image-optimizer
+          asset_name: image-optimizer-win
           overwrite: true
