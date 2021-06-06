@@ -32,7 +32,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: target/release/image-optimizer
-          asset_name: image-optimizer-linux-amd64
+          asset_name: image-optimizer-linux
           tag: ${{ github.ref }}
           overwrite: true
   

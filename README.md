@@ -12,13 +12,13 @@ The required binary for the platform can be downloaded from [Releases: Main](htt
 
 ```
 # Linux 
-curl https://github.com/naschidaniel/image-optimizer/releases/download/main/image-optimizer-linux --output image-optimizer
+curl -L https://github.com/naschidaniel/image-optimizer/releases/download/main/image-optimizer-linux --output image-optimizer && chmod +x image-optimizer
 
 # Windows
-curl https://github.com/naschidaniel/image-optimizer/releases/download/main/image-optimizer.exe
+curl -L https://github.com/naschidaniel/image-optimizer/releases/download/main/image-optimizer.exe
 
 # MacOs
-curl https://github.com/naschidaniel/image-optimizer/releases/download/main/image-optimizer-macos --output image-optimizer
+curl -L https://github.com/naschidaniel/image-optimizer/releases/download/main/image-optimizer-macos --output image-optimizer && chmod +x image-optimizer
 ```
 
 The following command line arguments are required: {inputfolder} {outputfolder} {sufix} {width} {quality}.
