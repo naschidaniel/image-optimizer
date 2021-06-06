@@ -1,6 +1,4 @@
-![[release-linux]](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml/badge.svg?name=release?job=release-linux) 
-![[release-windows]](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml/badge.svg?name=release?job=release-windows) 
-![[release-macos]](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml/badge.svg?name=release?job=release-macos) 
+![[release]](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml/badge.svg) 
 ![[rsaudit]](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsaudit.yml/badge.svg?name=rsaudit) 
 ![[rstest]](https://github.com/naschidaniel/image-optimizer/actions/workflows/rstest.yml/badge.svg?name=rstest)
 
