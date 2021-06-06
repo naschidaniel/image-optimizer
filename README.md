@@ -6,12 +6,22 @@
 
 A small tool to optimise images for web applications. The tool is written in Rust. 
 
+## Get the latest release of the image-optimizer
+
+```
+# Linux
+wget -c https://github.com/naschidaniel/image-optimizer/releases/download/main/image-optimizer-linux-amd64 -O image-optimizer
+```
 The following command line arguments are required: {inputfolder} {outputfolder} {sufix} {width} {quality}.
 
+The following commands optimise all `*.jpg` and `*.png` files in the `./media` folder. In this example, the file `./testdata/media/fly_sm.JPG` will be created with the width of `500 px` and the quality parameter of `90`.
+
+```
+./image-optimizer ./media ./testdata sm 500 90
+```
 
 ## Development
 
-The following commands optimise all `*.jpg` and `*.png` files in the `./media` folder. In this example, the file `./testdata/media/fly_sm.JPG` is created with the width of `500 px` and the quality parameter of `90`.
 
 ```
 cargo test
@@ -45,4 +55,4 @@ cargo build --release
 
 [GPL-3.0](./LICENSE)
 
-Copyright (c) 2019-present, Daniel Naschberger
+Copyright (c) 2021-present, Daniel Naschberger
