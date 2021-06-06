@@ -1,4 +1,4 @@
-![[build]](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml/badge.svg?name=release) 
+![[release-linux]](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml/badge.svg?name=release-linux) 
 ![[rsaudit]](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsaudit.yml/badge.svg?name=rsaudit) 
 ![[rstest]](https://github.com/naschidaniel/image-optimizer/actions/workflows/rstest.yml/badge.svg?name=rstest)
 
