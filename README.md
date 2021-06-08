@@ -15,7 +15,7 @@ The required binary for the platform can be downloaded from [Releases: Main](htt
 curl -L https://github.com/naschidaniel/image-optimizer/releases/download/main/image-optimizer-linux --output image-optimizer && chmod +x image-optimizer
 
 # Windows
-curl -L https://github.com/naschidaniel/image-optimizer/releases/download/main/image-optimizer.exe
+curl -L https://github.com/naschidaniel/image-optimizer/releases/download/main/image-optimizer.exe --output image-optimizer.exe
 
 # MacOs
 curl -L https://github.com/naschidaniel/image-optimizer/releases/download/main/image-optimizer-macos --output image-optimizer && chmod +x image-optimizer
