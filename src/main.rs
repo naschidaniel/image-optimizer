@@ -22,23 +22,22 @@ fn encode_image(
     let img = image::open(&filename_path).expect("Opening image failed");
     let new_width = width.to_owned();
     let ratio = img.width() as f32 / new_width as f32;
-    let new_hight_f32 = img.height() as f32 / ratio;
-    let new_hight = new_hight_f32 as u32;
+    let new_height_f32 = img.height() as f32 / ratio;
+    let new_height = new_height_f32 as u32;
 
     println!(
         "Converting {:?} (w: {:?}, h: {:?}) to {:?} (w: {:?}, h: {:?}), ratio: {:?}",
-        filename_path, img.width(), img.height(), filename_new_path, new_width, new_hight, ratio
+        filename_path, img.width(), img.height(), filename_new_path, new_width, new_height, ratio
     );
 
-    let resized = img.resize_exact(new_width, new_hight, FilterType::Lanczos3);
+    let resized = img.resize_exact(new_width, new_height, FilterType::Lanczos3);
     let file = File::create(filename_new_path).unwrap();
     let ref mut file_output = BufWriter::new(file);
-
     if extension == "jpg" || extension == "jpeg" {
         JpegEncoder::new_with_quality(file_output, *quality).encode(
             &resized.to_bytes(),
             new_width,
-            new_hight,
+            new_height,
             img.color(),
         )
     } else if extension == "png" {
@@ -47,7 +46,7 @@ fn encode_image(
             png::CompressionType::Default,
             png::FilterType::NoFilter,
         )
-        .encode(&resized.to_bytes(), new_width, new_hight, img.color())
+        .encode(&resized.to_bytes(), new_width, new_height, img.color())
     } else {
         panic!("The format is not supported")
     }
