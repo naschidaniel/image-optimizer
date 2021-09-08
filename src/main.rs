@@ -1,5 +1,6 @@
 use chrono::Local;
 use glob::{glob_with, MatchOptions};
+use image::DynamicImage;
 use image::codecs::png;
 use image::imageops::FilterType;
 use image::jpeg::JpegEncoder;
@@ -9,8 +10,16 @@ use image::ImageError;
 use std::env;
 use std::fs;
 use std::fs::File;
-use std::io::BufWriter;
+use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
+use webp::{Encoder, PixelLayout};
+
+fn encode_webp_image(resized: &DynamicImage, filename_new_path: &PathBuf, width: u32, height: u32, quality: f32) {
+    let filename = filename_new_path.to_str().to_owned().unwrap().replace(".JPG", ".webp");
+    let mut buffer = File::create(filename).unwrap();
+    let webp_image = Encoder::new(&resized.to_bytes(), PixelLayout::Rgb, width, height).encode(quality);
+    buffer.write(&*webp_image).unwrap();
+}
 
 fn encode_image(
     filename_path: PathBuf,
@@ -34,6 +43,7 @@ fn encode_image(
     let file = File::create(filename_new_path).unwrap();
     let ref mut file_output = BufWriter::new(file);
     if extension == "jpg" || extension == "jpeg" {
+        encode_webp_image(&resized, filename_new_path, new_width, new_height, *quality as f32);
         JpegEncoder::new_with_quality(file_output, *quality).encode(
             &resized.to_bytes(),
             new_width,
