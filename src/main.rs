@@ -14,8 +14,7 @@ use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
 use webp::{Encoder, PixelLayout};
 
-fn encode_webp_image(resized: &DynamicImage, filename_new_path: &PathBuf, width: u32, height: u32, quality: f32) {
-    let filename = filename_new_path.to_str().to_owned().unwrap().replace(".JPG", ".webp");
+fn encode_webp_image(resized: &DynamicImage, filename: &Path, width: u32, height: u32, quality: f32) {
     let mut buffer = File::create(filename).unwrap();
     let webp_image = Encoder::new(&resized.to_bytes(), PixelLayout::Rgb, width, height).encode(quality);
     buffer.write(&*webp_image).unwrap();
@@ -26,39 +25,49 @@ fn encode_image(
     filename_new_path: &PathBuf,
     width: &u32,
     quality: &u8,
+    webp_image: &bool,
 ) -> Result<(), ImageError> {
-    let extension = filename_path.extension().unwrap().to_str().unwrap().to_lowercase();
+    let extension = filename_path.extension().unwrap().to_str().unwrap();
+    let extension_lowercase = extension.to_lowercase();
     let img = image::open(&filename_path).expect("Opening image failed");
     let new_width = width.to_owned();
-    let ratio = img.width() as f32 / new_width as f32;
-    let new_height_f32 = img.height() as f32 / ratio;
+    let resize_ratio = img.width() as f32 / new_width as f32;
+    let new_height_f32 = img.height() as f32 / resize_ratio;
     let new_height = new_height_f32 as u32;
 
     println!(
-        "Converting {:?} (w: {:?}, h: {:?}) to {:?} (w: {:?}, h: {:?}), ratio: {:?}",
-        filename_path, img.width(), img.height(), filename_new_path, new_width, new_height, ratio
+        "Converting {:?} (w: {:?}, h: {:?}) to {:?} (w: {:?}, h: {:?}), resize ratio: {:?}",
+        filename_path, img.width(), img.height(), filename_new_path, new_width, new_height, resize_ratio
     );
 
     let resized = img.resize_exact(new_width, new_height, FilterType::Lanczos3);
     let file = File::create(filename_new_path).unwrap();
     let ref mut file_output = BufWriter::new(file);
-    if extension == "jpg" || extension == "jpeg" {
-        encode_webp_image(&resized, filename_new_path, new_width, new_height, *quality as f32);
+    
+    if !(extension_lowercase == "jpg" || extension_lowercase == "jpeg" || extension_lowercase == "png") {
+        panic!("The format is not supported")
+    }
+    if webp_image == &true {
+        let rudi = &filename_new_path.to_str().to_owned().unwrap().replace(&extension, "webp");
+        let filename = Path::new(rudi);
+        println!("Creating WebP image {:?} (w: {:?}, h: {:?}), resize ratio: {:?}", filename, new_width, new_height, resize_ratio);
+        encode_webp_image(&resized, filename, new_width, new_height, *quality as f32);
+    }
+    
+    if extension_lowercase == "jpg" || extension_lowercase == "jpeg" {
         JpegEncoder::new_with_quality(file_output, *quality).encode(
             &resized.to_bytes(),
             new_width,
             new_height,
             img.color(),
         )
-    } else if extension == "png" {
+    } else {
         PngEncoder::new_with_quality(
           file_output,
             png::CompressionType::Default,
             png::FilterType::NoFilter,
         )
         .encode(&resized.to_bytes(), new_width, new_height, img.color())
-    } else {
-        panic!("The format is not supported")
     }
 }
 
@@ -85,6 +94,7 @@ fn resize_images(
     suffix: &String,
     width: &u32,
     quality: &u8,
+    webp_image: &bool,
 ) {
   let options = MatchOptions {
     case_sensitive: false,
@@ -104,7 +114,7 @@ fn resize_images(
             Ok(filename_path) => {
                 let filename_new_path =
                     create_filename_new_path(&filename_path, input_folder, output_folder, suffix);
-                let handle = encode_image(filename_path, &filename_new_path, width, quality);
+                let handle = encode_image(filename_path, &filename_new_path, width, quality, webp_image);
                 match handle {
                     Ok(_) => println!(
                         "The file '{:?}' was converted successfully!",
@@ -126,13 +136,15 @@ fn main() {
 
     let width = &args[4].parse().unwrap();
     let quality = &args[5].parse().unwrap();
+    let webp_image = &args[6].parse().unwrap();
     println!("Input Folder: {}", &args[1]);
     println!("Output Folder: {}", &args[2]);
     println!("Filename Suffix: {}", &args[3]);
-    println!("Width {}", width);
-    println!("Quality {}", width);
+    println!("Width: {}", width);
+    println!("Quality: {}", quality);
+    println!("WebP Image: {}", webp_image);
 
-    resize_images(&args[1], &args[2], &args[3], width, quality);
+    resize_images(&args[1], &args[2], &args[3], width, quality, webp_image);
     let end_time = Local::now().time();
     let diff = end_time - start_time;
     println!("Total time {} in Seconds", diff.num_seconds());
@@ -141,17 +153,30 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tempfile::tempdir;
+    use fs::remove_dir_all;
 
     #[test]
     fn test_resize_images() {
         let media = String::from("./media");
-        let testdata = String::from("./testdata");
+        let tempdir = String::from(tempdir().unwrap().into_path().to_str().unwrap());
         let suffix = String::from("sm");
         let width = 500;
         let quality = 90;
-        resize_images(&media, &testdata, &suffix, &width, &quality);
-        let img_ok = image::open("./testdata/test_ok_fly_sm.JPG").expect("Opening image failed");
-        let img = image::open("./testdata/paradise/fly_sm.JPG").expect("Opening image failed");
-        assert_eq!(img_ok, img);
+        let webp_image = true;
+        resize_images(&media, &tempdir, &suffix, &width, &quality, &webp_image);
+        let img_jpg_ok = image::open("./testdata/test_ok_fly_sm.JPG").expect("Opening './testdata/test_ok_fly_sm.JPG' failed");
+        let img_webp_ok = image::open("./testdata/test_ok_fly_sm.webp").expect("Opening './testdata/test_ok_fly_sm.webp' Jpg image failed");
+
+        let mut temp_img_jpg_path = tempdir.to_owned();
+        temp_img_jpg_path.push_str("/paradise/fly_sm.JPG");
+        let mut temp_img_webp_path = tempdir.to_owned();
+        temp_img_webp_path.push_str("/paradise/fly_sm.webp");
+
+        let temp_img = image::open(temp_img_jpg_path).expect("Opening temporary Jpg image failed");
+        assert_eq!(img_jpg_ok, temp_img);
+        let temp_img = image::open(temp_img_webp_path).expect("Opening temporary WebP image failed");
+        assert_eq!(img_webp_ok, temp_img);
+        remove_dir_all(tempdir).unwrap();
     }
 }
