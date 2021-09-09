@@ -1,6 +1,6 @@
 [package]
 name = "image-optimizer"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Daniel Naschberger <daniel@naschi.at>"]
 edition = "2018"
 
@@ -8,4 +8,5 @@ edition = "2018"
 chrono = "0.4.19"
 image = "0.23.14"
 glob = "0.3.0"
+tempfile = "3.2.0"
 webp = "0.2"
