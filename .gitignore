@@ -1,6 +1,7 @@
 # Pictures
 /dist
-/testdata/paradise/fly_sm.JPG
+/testdata/paradise/*.JPG
+/testdata/paradise/*.webp
 
 # Rust build artifacts
 /target
