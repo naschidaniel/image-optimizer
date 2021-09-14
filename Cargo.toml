@@ -1,6 +1,6 @@
 [package]
 name = "image-optimizer"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Daniel Naschberger <daniel@naschi.at>"]
 edition = "2018"
 
