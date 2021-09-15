@@ -78,7 +78,7 @@ fn encode_image(
     }
 }
 
-fn resize_images(
+fn run_resize_images(
     input_folder: &String,
     output_folder: &String,
     suffix: &String,
@@ -147,7 +147,7 @@ fn main() {
     println!("Quality: {}", quality);
     println!("WebP Image: {}", webp_image);
 
-    resize_images(&args[1], &args[2], &args[3], width, quality, webp_image);
+    run_resize_images(&args[1], &args[2], &args[3], width, quality, webp_image);
     let end_time = Local::now().time();
     let diff = end_time - start_time;
     println!("Duration {} in Seconds", diff.num_seconds());
@@ -160,29 +160,43 @@ mod tests {
     use tempfile::tempdir;
 
     #[test]
+    /// The test checks whether the original images can be optimized.
     fn test_resize_images() {
+        // command line arguments
         let media = String::from("./media");
         let tempdir = String::from(tempdir().unwrap().into_path().to_str().unwrap());
         let suffix = String::from("sm");
         let width = 500;
         let quality = 90;
         let webp_image = true;
-        resize_images(&media, &tempdir, &suffix, &width, &quality, &webp_image);
-        let img_jpg_ok = image::open("./testdata/test_ok_fly_sm.JPG")
-            .expect("Opening './testdata/test_ok_fly_sm.JPG' failed");
-        let img_webp_ok = image::open("./testdata/test_ok_fly_sm.webp")
-            .expect("Opening './testdata/test_ok_fly_sm.webp' Jpg image failed");
+
+        // optimize images
+        run_resize_images(&media, &tempdir, &suffix, &width, &quality, &webp_image);
 
         let mut temp_img_jpg_path = tempdir.to_owned();
         temp_img_jpg_path.push_str("/paradise/fly_sm.JPG");
-        let mut temp_img_webp_path = tempdir.to_owned();
-        temp_img_webp_path.push_str("/paradise/fly_sm.webp");
+        let mut temp_img_png_path = tempdir.to_owned();
+        temp_img_png_path.push_str("/paradise/paragliding_sm.png");
+        let mut temp_img_jpg_webp_path = tempdir.to_owned();
+        temp_img_jpg_webp_path.push_str("/paradise/fly_sm.webp");
+        let mut temp_img_png_webp_path = tempdir.to_owned();
+        temp_img_png_webp_path.push_str("/paradise/paragliding_sm.webp");
 
-        let temp_img = image::open(temp_img_jpg_path).expect("Opening temporary Jpg image failed");
-        assert_eq!(img_jpg_ok, temp_img);
-        let temp_img =
-            image::open(temp_img_webp_path).expect("Opening temporary WebP image failed");
-        assert_eq!(img_webp_ok, temp_img);
+        let temp_img_jpg = image::open(temp_img_jpg_path).unwrap();
+        let temp_img_png = image::open(temp_img_png_path).unwrap();
+        let temp_img_jpg_webp = image::open(temp_img_jpg_webp_path).unwrap();
+        let temp_img_png_webp = image::open(temp_img_png_webp_path).unwrap();
+
+        // valid testdata
+        let img_jpg_ok = image::open("./testdata/test_ok_fly_sm.JPG").unwrap();
+        let img_jpg_webp_ok = image::open("./testdata/test_ok_fly_sm.webp").unwrap();
+        let img_png_ok = image::open("./testdata/test_ok_paragliding_sm.png").unwrap();
+        let img_png_webp_ok = image::open("./testdata/test_ok_paragliding_sm.webp").unwrap();
+
+        assert_eq!(img_jpg_ok, temp_img_jpg);
+        assert_eq!(img_jpg_webp_ok, temp_img_jpg_webp);
+        assert_eq!(img_png_ok, temp_img_png);
+        assert_eq!(img_png_webp_ok, temp_img_png_webp);
         remove_dir_all(tempdir).unwrap();
     }
 }
