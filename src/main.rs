@@ -187,6 +187,20 @@ mod tests {
         let temp_img_jpg_webp = image::open(temp_img_jpg_webp_path).unwrap();
         let temp_img_png_webp = image::open(temp_img_png_webp_path).unwrap();
 
+        let mut temp_img_jpg_thumbnail_path = tempdir.to_owned();
+        temp_img_jpg_thumbnail_path.push_str("/paradise/fly_sm_thumbnail.JPG");
+        let mut temp_img_png_thumbnail_path = tempdir.to_owned();
+        temp_img_png_thumbnail_path.push_str("/paradise/paragliding_sm_thumbnail.png");
+        let mut temp_img_jpg_webp_thumbnail_path = tempdir.to_owned();
+        temp_img_jpg_webp_thumbnail_path.push_str("/paradise/fly_sm_thumbnail.webp");
+        let mut temp_img_png_webp_thumbnail_path = tempdir.to_owned();
+        temp_img_png_webp_thumbnail_path.push_str("/paradise/paragliding_sm_thumbnail.webp");
+
+        let temp_img_jpg_thumbnail = image::open(temp_img_jpg_thumbnail_path).unwrap();
+        let temp_img_png_thumbnail = image::open(temp_img_png_thumbnail_path).unwrap();
+        let temp_img_jpg_webp_thumbnail = image::open(temp_img_jpg_webp_thumbnail_path).unwrap();
+        let temp_img_png_webp_thumbnail = image::open(temp_img_png_webp_thumbnail_path).unwrap();
+
         // valid testdata
         let img_jpg_ok = image::open("./testdata/test_ok_fly_sm.JPG").unwrap();
         let img_jpg_webp_ok = image::open("./testdata/test_ok_fly_sm.webp").unwrap();
@@ -197,6 +211,17 @@ mod tests {
         assert_eq!(img_jpg_webp_ok, temp_img_jpg_webp);
         assert_eq!(img_png_ok, temp_img_png);
         assert_eq!(img_png_webp_ok, temp_img_png_webp);
+
+        // valid testdata thumbnails
+        let img_jpg_thumbnail_ok = image::open("./testdata/test_ok_fly_sm_thumbnail.JPG").unwrap();
+        let img_jpg_webp_thumbnail_ok = image::open("./testdata/test_ok_fly_sm_thumbnail.webp").unwrap();
+        let img_png_thumbnail_ok = image::open("./testdata/test_ok_paragliding_sm_thumbnail.png").unwrap();
+        let img_png_webp_thumbnail_ok = image::open("./testdata/test_ok_paragliding_sm_thumbnail.webp").unwrap();
+
+        assert_eq!(img_jpg_thumbnail_ok, temp_img_jpg_thumbnail);
+        assert_eq!(img_jpg_webp_thumbnail_ok, temp_img_jpg_webp_thumbnail);
+        assert_eq!(img_png_thumbnail_ok, temp_img_png_thumbnail);
+        assert_eq!(img_png_webp_thumbnail_ok, temp_img_png_webp_thumbnail);
         remove_dir_all(tempdir).unwrap();
     }
 }
