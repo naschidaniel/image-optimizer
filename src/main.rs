@@ -9,20 +9,14 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 /// The necessary file structure is created and the modified file name is returned as `PathBuf`.
-fn create_output_dir_filename(
+fn create_filenames(
     filename_original: &PathBuf,
-    input_folder: &String,
-    output_folder: &String,
-    suffix: &String,
-) -> PathBuf {
-    let input_folder_pattern = input_folder.strip_prefix("./").unwrap();
-    let input_sub_folders = filename_original
-        .parent()
-        .unwrap()
-        .strip_prefix(input_folder_pattern)
-        .unwrap();
+    output_path: &PathBuf,
+    suffix: &String
+) -> [PathBuf; 2] {
     let file_stem = filename_original.file_stem().unwrap().to_str().unwrap();
     let file_stem_optimize_image = format!("{}_{}", file_stem, suffix);
+    let file_stem_thumbnail_optimize_image = format!("{}_{}_thumbnail", file_stem, suffix);
     let filename_optimize_image = filename_original
         .file_name()
         .unwrap()
@@ -30,14 +24,37 @@ fn create_output_dir_filename(
         .unwrap()
         .to_owned()
         .replace(file_stem, &*file_stem_optimize_image);
-    let output_path = Path::new(output_folder).join(input_sub_folders);
-    fs::create_dir_all(&output_path).unwrap();
-    output_path.join(filename_optimize_image)
+    let filename_thumbnail_optimize_image = filename_original
+        .file_name()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_owned()
+        .replace(file_stem, &*file_stem_thumbnail_optimize_image);
+    [output_path.clone().join(filename_optimize_image), output_path.clone().join(filename_thumbnail_optimize_image)]
 }
 
-fn encode_image(
+/// The directory for the output is created an a `PathBuf` with the name of the folder is returned.
+fn create_output_dir(
+    filename_original: &PathBuf,
+    input_folder: &String,
+    output_folder: &String,
+) -> PathBuf {
+    let input_folder_pattern = input_folder.strip_prefix("./").unwrap();
+    let input_sub_folders = filename_original
+        .parent()
+        .unwrap()
+        .strip_prefix(input_folder_pattern)
+        .unwrap();
+    let output_path = Path::new(output_folder).join(input_sub_folders);
+    fs::create_dir_all(&output_path).unwrap();
+    output_path
+}
+
+fn resize_image(
     filename_original: PathBuf,
     filename_optimized_image: &PathBuf,
+    filename_thumbnail_optimized_image: &PathBuf,
     nwidth: &u32,
     nquality: &u8,
     webp_image: &bool,
@@ -55,6 +72,14 @@ fn encode_image(
         filename_optimized_image.to_owned(),
         *nwidth,
         *nquality,
+        false
+    );
+    let thumbnail_optimized_image = image_optimizer::ImageOptimizer::new(
+        original_image.to_owned(),
+        filename_thumbnail_optimized_image.to_owned(),
+        *nwidth,
+        *nquality,
+        true
     );
     println!(
         "Converting {:?} (w: {:?}, h: {:?}) to {:?} (w: {:?}, h: {:?}), resize ratio: {:?}",
@@ -69,12 +94,15 @@ fn encode_image(
 
     if webp_image == &true {
         optimized_image.save_webp_image();
+        thumbnail_optimized_image.save_webp_image();
     }
 
     if extension.to_lowercase() == "jpg" || extension.to_lowercase() == "jpeg" {
-        optimized_image.save_jpg_image()
+        optimized_image.save_jpg_image().unwrap();
+        thumbnail_optimized_image.save_jpg_image()
     } else {
-        optimized_image.save_png_image()
+        optimized_image.save_png_image().unwrap();
+        thumbnail_optimized_image.save_png_image()
     }
 }
 
@@ -102,20 +130,21 @@ fn run_resize_images(
     {
         match entry {
             Ok(filename_original) => {
-                let filename_optimize_image = create_output_dir_filename(
+                let output_path = create_output_dir(
                     &filename_original,
                     input_folder,
                     output_folder,
-                    suffix,
                 );
-                let handle = encode_image(
+                let filename_optimize_image = create_filenames(&filename_original, &output_path, suffix);
+                let handle_image = resize_image(
                     filename_original,
-                    &filename_optimize_image,
+                    &filename_optimize_image[0],
+                    &filename_optimize_image[1],
                     width,
                     quality,
                     webp_image,
                 );
-                match handle {
+                match handle_image {
                     Ok(_) => println!(
                         "The file '{:?}' was converted successfully!",
                         filename_optimize_image

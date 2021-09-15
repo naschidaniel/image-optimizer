@@ -25,10 +25,18 @@ impl ImageOptimizer {
         nfilename: PathBuf,
         nwidth: u32,
         nquality: u8,
+        thumbnail: bool,
     ) -> ImageOptimizer {
         let resize_ratio = original_image.width() as f32 / nwidth as f32;
-        let nheight = (original_image.height() as f32 / resize_ratio) as u32;
-        let nimage = original_image.resize_exact(nwidth, nheight, FilterType::Lanczos3);
+
+        let nheight =  match thumbnail {
+            true => nwidth,
+            false => (original_image.height() as f32 / resize_ratio) as u32,
+        };
+        let nimage = match thumbnail {
+            true => original_image.resize_to_fill(nwidth, nheight, FilterType::Lanczos3),
+            false => original_image.resize_exact(nwidth, nheight, FilterType::Lanczos3),
+        };
         ImageOptimizer {
             nimage,
             nfilename,
