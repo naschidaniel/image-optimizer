@@ -16,7 +16,6 @@ pub struct ImageOptimizer {
     pub nwidth: u32,
     pub nheight: u32,
     pub nquality: u8,
-    pub resize_ratio: f32,
 }
 
 impl ImageOptimizer {
@@ -35,10 +34,25 @@ impl ImageOptimizer {
             nwidth,
             nheight,
             nquality,
-            resize_ratio,
         }
     }
-    fn extension(&self) -> &str {
+    pub fn new_thumbnail(
+        original_image: DynamicImage,
+        nfilename: PathBuf,
+        nwidth: u32,
+        nquality: u8,
+    ) -> ImageOptimizer {
+        let nheight = nwidth;
+        let nimage = original_image.resize_to_fill(nwidth, nheight, FilterType::Lanczos3);
+        ImageOptimizer {
+            nimage,
+            nfilename,
+            nwidth,
+            nheight,
+            nquality,
+        }
+    }
+    pub fn extension(&self) -> &str {
         self.nfilename.extension().unwrap().to_str().unwrap()
     }
     pub fn save_jpg_image(&self) -> Result<(), ImageError> {
@@ -75,8 +89,8 @@ impl ImageOptimizer {
             .replace(&self.extension(), "webp");
         let filename = Path::new(file);
         println!(
-            "Creating WebP image {:?} (w: {:?}, h: {:?}), resize ratio: {:?}, quality: {:?}",
-            filename, self.nwidth, self.nheight, self.resize_ratio, self.nquality
+            "Creating WebP image {:?} (w: {:?}, h: {:?}), quality: {:?}",
+            filename, self.nwidth, self.nheight, self.nquality
         );
         let mut buffer = File::create(filename).unwrap();
         let webp_image = Encoder::new(
