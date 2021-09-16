@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 fn create_filenames(
     filename_original: &PathBuf,
     output_path: &PathBuf,
-    suffix: &String
+    suffix: &String,
 ) -> [PathBuf; 2] {
     let file_stem = filename_original.file_stem().unwrap().to_str().unwrap();
     let file_stem_optimize_image = format!("{}_{}", file_stem, suffix);
@@ -31,7 +31,10 @@ fn create_filenames(
         .unwrap()
         .to_owned()
         .replace(file_stem, &*file_stem_thumbnail_optimize_image);
-    [output_path.clone().join(filename_optimize_image), output_path.clone().join(filename_thumbnail_optimize_image)]
+    [
+        output_path.clone().join(filename_optimize_image),
+        output_path.clone().join(filename_thumbnail_optimize_image),
+    ]
 }
 
 /// The directory for the output is created an a `PathBuf` with the name of the folder is returned.
@@ -52,57 +55,48 @@ fn create_output_dir(
 }
 
 fn resize_image(
-    filename_original: PathBuf,
+    filename_original: &PathBuf,
     filename_optimized_image: &PathBuf,
-    filename_thumbnail_optimized_image: &PathBuf,
     nwidth: &u32,
     nquality: &u8,
     webp_image: &bool,
+    thumbnail: &bool,
 ) -> Result<(), ImageError> {
-    let extension = filename_original.extension().unwrap().to_str().unwrap();
-    if !(extension.to_lowercase() == "jpg"
-        || extension.to_lowercase() == "jpeg"
-        || extension.to_lowercase() == "png")
-    {
-        panic!("The format '{:?}' is not supported", extension)
-    }
     let original_image = image::open(&filename_original).expect("Opening image original failed");
-    let optimized_image = image_optimizer::ImageOptimizer::new(
+    let optimized_image = match thumbnail {
+        true => image_optimizer::ImageOptimizer::new_thumbnail(
         original_image.to_owned(),
         filename_optimized_image.to_owned(),
-        *nwidth,
+                nwidth.clone(),
         *nquality,
-        false
-    );
-    let thumbnail_optimized_image = image_optimizer::ImageOptimizer::new(
+        ),
+        false => image_optimizer::ImageOptimizer::new(
         original_image.to_owned(),
-        filename_thumbnail_optimized_image.to_owned(),
-        *nwidth,
+                filename_optimized_image.to_owned(),
+                nwidth.clone(),
         *nquality,
-        true
-    );
+        ),
+        };   
     println!(
-        "Converting {:?} (w: {:?}, h: {:?}) to {:?} (w: {:?}, h: {:?}), resize ratio: {:?}",
+        "Converting {:?} (w: {:?}, h: {:?}) to {:?} (w: {:?}, h: {:?})",
         filename_original,
         original_image.width(),
         original_image.height(),
-        filename_optimized_image,
+        optimized_image.nfilename,
         optimized_image.nwidth,
         optimized_image.nheight,
-        optimized_image.resize_ratio
     );
 
     if webp_image == &true {
         optimized_image.save_webp_image();
-        thumbnail_optimized_image.save_webp_image();
     }
 
-    if extension.to_lowercase() == "jpg" || extension.to_lowercase() == "jpeg" {
-        optimized_image.save_jpg_image().unwrap();
-        thumbnail_optimized_image.save_jpg_image()
+    if optimized_image.extension().to_lowercase() == "jpg"
+        || optimized_image.extension().to_lowercase() == "jpeg"
+    {
+        optimized_image.save_jpg_image()
     } else {
-        optimized_image.save_png_image().unwrap();
-        thumbnail_optimized_image.save_png_image()
+        optimized_image.save_png_image()
     }
 }
 
@@ -113,6 +107,7 @@ fn run_resize_images(
     width: &u32,
     quality: &u8,
     webp_image: &bool,
+    thumbnail: &bool,
 ) {
     let options = MatchOptions {
         case_sensitive: false,
@@ -130,32 +125,34 @@ fn run_resize_images(
     {
         match entry {
             Ok(filename_original) => {
-                let output_path = create_output_dir(
+                let output_path =
+                    create_output_dir(&filename_original, input_folder, output_folder);
+                let filename_optimize_image =
+                    create_filenames(&filename_original, &output_path, suffix);
+                resize_image(
                     &filename_original,
-                    input_folder,
-                    output_folder,
-                );
-                let filename_optimize_image = create_filenames(&filename_original, &output_path, suffix);
-                let handle_image = resize_image(
-                    filename_original,
                     &filename_optimize_image[0],
-                    &filename_optimize_image[1],
-                    width,
-                    quality,
+                    &width,
+                    &quality,
                     webp_image,
-                );
-                match handle_image {
-                    Ok(_) => println!(
-                        "The file '{:?}' was converted successfully!",
-                        filename_optimize_image
-                    ),
-                    Err(_) => {
-                        println!(
-                            "The file '{:?}' could not be converted!",
-                            filename_optimize_image
-                        )
-                    }
+                    &false,
+                )
+                .unwrap();
+                if thumbnail == &true {
+                    resize_image(
+                        &filename_original,
+                    &filename_optimize_image[1],
+                        &width,
+                        &quality,
+                    webp_image,
+                        thumbnail,
+                    )
+                    .unwrap();
                 }
+                println!(
+                    "The file '{:?}' was converted successfully!",
+                    &filename_original
+                );
             }
             Err(e) => println!("{:?}", e),
         }
@@ -169,14 +166,18 @@ fn main() {
     let width = &args[4].parse().unwrap();
     let quality = &args[5].parse().unwrap();
     let webp_image = &args[6].parse().unwrap();
+    let thumbnail = &args[7].parse().unwrap();
     println!("Input Folder: {}", &args[1]);
     println!("Output Folder: {}", &args[2]);
     println!("Filename Suffix: {}", &args[3]);
     println!("Width: {}", width);
     println!("Quality: {}", quality);
     println!("WebP Image: {}", webp_image);
+    println!("Thumbnail: {}", thumbnail);
 
-    run_resize_images(&args[1], &args[2], &args[3], width, quality, webp_image);
+    run_resize_images(
+        &args[1], &args[2], &args[3], width, quality, webp_image, thumbnail,
+    );
     let end_time = Local::now().time();
     let diff = end_time - start_time;
     println!("Duration {} in Seconds", diff.num_seconds());
@@ -198,9 +199,18 @@ mod tests {
         let width = 500;
         let quality = 90;
         let webp_image = true;
+        let thumbnail = true;
 
         // optimize images
-        run_resize_images(&media, &tempdir, &suffix, &width, &quality, &webp_image);
+        run_resize_images(
+            &media,
+            &tempdir,
+            &suffix,
+            &width,
+            &quality,
+            &webp_image,
+            &thumbnail,
+        );
 
         let mut temp_img_jpg_path = tempdir.to_owned();
         temp_img_jpg_path.push_str("/paradise/fly_sm.JPG");
@@ -243,9 +253,12 @@ mod tests {
 
         // valid testdata thumbnails
         let img_jpg_thumbnail_ok = image::open("./testdata/test_ok_fly_sm_thumbnail.JPG").unwrap();
-        let img_jpg_webp_thumbnail_ok = image::open("./testdata/test_ok_fly_sm_thumbnail.webp").unwrap();
-        let img_png_thumbnail_ok = image::open("./testdata/test_ok_paragliding_sm_thumbnail.png").unwrap();
-        let img_png_webp_thumbnail_ok = image::open("./testdata/test_ok_paragliding_sm_thumbnail.webp").unwrap();
+        let img_jpg_webp_thumbnail_ok =
+            image::open("./testdata/test_ok_fly_sm_thumbnail.webp").unwrap();
+        let img_png_thumbnail_ok =
+            image::open("./testdata/test_ok_paragliding_sm_thumbnail.png").unwrap();
+        let img_png_webp_thumbnail_ok =
+            image::open("./testdata/test_ok_paragliding_sm_thumbnail.webp").unwrap();
 
         assert_eq!(img_jpg_thumbnail_ok, temp_img_jpg_thumbnail);
         assert_eq!(img_jpg_webp_thumbnail_ok, temp_img_jpg_webp_thumbnail);
