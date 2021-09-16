@@ -190,6 +190,19 @@ mod tests {
     use tempfile::tempdir;
 
     #[test]
+    fn test_create_output_dir() {
+        let tempdir = tempdir().unwrap().into_path();
+        let mut filename_original = PathBuf::new();
+        filename_original.push("./media/foo/bar.jpg");
+        println!("{:?}", filename_original);
+        let input_folder = String::from("./media/paradise");
+        println!("{:?}", input_folder);
+        let output_folder = String::from("./moon");
+        let temp_outputfolder = create_output_dir(&filename_original, &input_folder, &output_folder);
+        println!("{:?}", temp_outputfolder);
+    }
+
+    #[test]
     /// The test checks whether the original images can be optimized.
     fn test_resize_images() {
         // command line arguments
