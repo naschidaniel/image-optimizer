@@ -1,10 +1,10 @@
 mod image_optimizer;
 
 use chrono::Local;
+use clap::App;
 use glob::{glob_with, MatchOptions};
 use image::GenericImageView;
 use image::ImageError;
-use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -40,16 +40,16 @@ fn create_filenames(
 /// The directory for the output is created an a `PathBuf` with the name of the folder is returned.
 fn create_output_dir(
     filename_original: &PathBuf,
-    input_folder: &String,
-    output_folder: &String,
+    source_folder: &String,
+    destination_folder: &String,
 ) -> PathBuf {
-    let input_folder_pattern = input_folder.strip_prefix("./").unwrap();
+    let source_folder_pattern = source_folder.strip_prefix("./").unwrap();
     let input_sub_folders = filename_original
         .parent()
         .unwrap()
-        .strip_prefix(input_folder_pattern)
+        .strip_prefix(source_folder_pattern)
         .unwrap();
-    let output_path = Path::new(output_folder).join(input_sub_folders);
+    let output_path = Path::new(destination_folder).join(input_sub_folders);
     fs::create_dir_all(&output_path).unwrap();
     output_path
 }
@@ -59,7 +59,7 @@ fn resize_image(
     filename_optimized_image: &PathBuf,
     nwidth: &u32,
     nquality: &u8,
-    webp_image: &bool,
+    webpimage: &bool,
     thumbnail: &bool,
 ) -> Result<(), ImageError> {
     let original_image = image::open(&filename_original).expect("Opening image original failed");
@@ -87,7 +87,7 @@ fn resize_image(
         optimized_image.nheight,
     );
 
-    if webp_image == &true {
+    if webpimage == &true {
         optimized_image.save_webp_image();
     }
 
@@ -101,12 +101,12 @@ fn resize_image(
 }
 
 fn run_resize_images(
-    input_folder: &String,
-    output_folder: &String,
+    source_folder: &String,
+    destination_folder: &String,
     suffix: &String,
     width: &u32,
     quality: &u8,
-    webp_image: &bool,
+    webpimage: &bool,
     thumbnail: &bool,
 ) {
     let options = MatchOptions {
@@ -114,9 +114,9 @@ fn run_resize_images(
         require_literal_separator: false,
         require_literal_leading_dot: false,
     };
-    let pattern_jpg = format!("{}/**/*.jpg", input_folder);
-    let pattern_jpeg = format!("{}/**/*.jpeg", input_folder);
-    let pattern_png = format!("{}/**/*.png", input_folder);
+    let pattern_jpg = format!("{}/**/*.jpg", source_folder);
+    let pattern_jpeg = format!("{}/**/*.jpeg", source_folder);
+    let pattern_png = format!("{}/**/*.png", source_folder);
 
     for entry in glob_with(&pattern_jpg, options)
         .unwrap()
@@ -126,7 +126,7 @@ fn run_resize_images(
         match entry {
             Ok(filename_original) => {
                 let output_path =
-                    create_output_dir(&filename_original, input_folder, output_folder);
+                    create_output_dir(&filename_original, source_folder, destination_folder);
                 let filename_optimize_image =
                     create_filenames(&filename_original, &output_path, suffix);
                 resize_image(
@@ -134,7 +134,7 @@ fn run_resize_images(
                     &filename_optimize_image[0],
                     &width,
                     &quality,
-                    webp_image,
+                    webpimage,
                     &false,
                 )
                 .unwrap();
@@ -144,7 +144,7 @@ fn run_resize_images(
                     &filename_optimize_image[1],
                         &width,
                         &quality,
-                    webp_image,
+                        webpimage,
                         thumbnail,
                     )
                     .unwrap();
@@ -161,23 +161,42 @@ fn run_resize_images(
 
 fn main() {
     let start_time = Local::now().time();
-    let args: Vec<String> = env::args().collect();
+    let name = env!("CARGO_PKG_NAME");
+    let version = env!("CARGO_PKG_VERSION");
+    let about = format!("{} Check out the README on https://github.com/naschidaniel/image-optimizer/blob/main/README.md for more details.", env!("CARGO_PKG_DESCRIPTION"));
 
-    let width = &args[4].parse().unwrap();
-    let quality = &args[5].parse().unwrap();
-    let webp_image = &args[6].parse().unwrap();
-    let thumbnail = &args[7].parse().unwrap();
-    println!("Input Folder: {}", &args[1]);
-    println!("Output Folder: {}", &args[2]);
-    println!("Filename Suffix: {}", &args[3]);
+    // Command line arguments
+    let args = App::new(name)
+    .version(version)
+    .author( env!("CARGO_PKG_AUTHORS"))
+    .about(about.as_str())
+    .arg("--source=[source]>            'Sets the source folder: ./media'")
+    .arg("--destination=[destination]>  'Sets the destination folder: ./testdata'")
+    .arg("--suffix=[suffix]>            'Sets the suffix of the optimized images: sm'")
+    .arg("--width=[width]>              'Sets the width of the optimized images: 500'")
+    .arg("--quality=[quality]>          'Sets the quality of the optimized images: 90'")
+    .arg("--webpimage=[webpimage]>      'Generate a copy in WebP Format of optimized images: true'")
+    .arg("--thumbnail=[thumbnail]>      'Generate a copy in thumbnail of optimized images: true'")
+    .get_matches();
+
+    let source_folder = &String::from(args.value_of("source").unwrap());
+    let destination_folder = &String::from(args.value_of("destination").unwrap());
+    let suffix = &String::from(args.value_of("suffix").unwrap());
+    let width = &String::from(args.value_of("width").unwrap()).parse::<u32>().unwrap();
+    let quality = &String::from(args.value_of("quality").unwrap()).parse::<u8>().unwrap();
+    let webpimage = &String::from(args.value_of("webpimage").unwrap()).parse::<bool>().unwrap();
+    let thumbnail = &String::from(args.value_of("thumbnail").unwrap()).parse::<bool>().unwrap();
+    
+    println!("Running {} in the Version of {}", name, version);
+    println!("Source Folder: {}", source_folder);
+    println!("Destination Folder: {}", destination_folder);
+    println!("Filename Suffix: {}",suffix);
     println!("Width: {}", width);
     println!("Quality: {}", quality);
-    println!("WebP Image: {}", webp_image);
+    println!("WebP-Image: {}", webpimage);
     println!("Thumbnail: {}", thumbnail);
 
-    run_resize_images(
-        &args[1], &args[2], &args[3], width, quality, webp_image, thumbnail,
-    );
+    run_resize_images(source_folder, destination_folder, suffix, width, quality, webpimage, thumbnail);
     let end_time = Local::now().time();
     let diff = end_time - start_time;
     println!("Duration {} in Seconds", diff.num_seconds());
