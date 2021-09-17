@@ -2,6 +2,7 @@
 /dist
 /testdata/paradise/*.JPG
 /testdata/paradise/*.webp
+/testdata/paradise/*.png
 
 # Rust build artifacts
 /target
