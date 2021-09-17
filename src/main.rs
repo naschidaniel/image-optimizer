@@ -150,7 +150,7 @@ fn run_resize_images(
                     .unwrap();
                 }
                 println!(
-                    "The file '{:?}' was converted successfully!",
+                    "The file '{:?}' has been converted successfully!",
                     &filename_original
                 );
             }
@@ -189,80 +189,93 @@ mod tests {
     use fs::remove_dir_all;
     use tempfile::tempdir;
 
+    /// The test checks if the filenames for the optimized image and the thumbnail can be generated.
     #[test]
+    fn test_create_filenames() {
+        let tempdir = tempdir().unwrap().into_path();
+        let mut filename_original = PathBuf::new();
+        filename_original.push("./foo/bar/baz.jpg");
+        let output_path = tempdir.join("./moon/foo/bar/");
+        let temp_filenames = create_filenames(&filename_original, &output_path, &String::from("sm"));
+        let temp_filenames_ok = 
+        [
+            tempdir.clone().join("./moon/foo/bar/baz_sm.jpg"),
+            tempdir.clone().join("./moon/foo/bar/baz_sm_thumbnail.jpg"),
+        ];
+        assert_eq!(temp_filenames_ok, temp_filenames);
+        remove_dir_all(tempdir).unwrap();
+    }
+
+    /// The test checks if the destination folder structure can be created.
+    #[test]
+    fn test_create_output_dir() {
+        let tempdir = tempdir().unwrap().into_path();
+        let mut filename_original = PathBuf::new();
+        filename_original.push("media/foo/bar/baz.jpg");
+        let input_folder = String::from("./media");
+        let output_folder = tempdir.join("./moon").to_str().unwrap().to_string();
+        let temp_outputfolder = create_output_dir(&filename_original, &input_folder, &output_folder);
+        let temp_outputfolder_ok = tempdir.clone().join("moon/foo/bar");
+        assert_eq!(temp_outputfolder_ok, temp_outputfolder);
+        remove_dir_all(tempdir).unwrap();
+    }
+
     /// The test checks whether the original images can be optimized.
+    #[test]
     fn test_resize_images() {
-        // command line arguments
-        let media = String::from("./media");
         let tempdir = String::from(tempdir().unwrap().into_path().to_str().unwrap());
-        let suffix = String::from("sm");
-        let width = 500;
-        let quality = 90;
-        let webp_image = true;
-        let thumbnail = true;
 
         // optimize images
         run_resize_images(
-            &media,
+            &String::from("./media"),
             &tempdir,
-            &suffix,
-            &width,
-            &quality,
-            &webp_image,
-            &thumbnail,
+            &String::from("sm"),
+            &500,
+            &90,
+            &true,
+            &true,
         );
 
         let mut temp_img_jpg_path = tempdir.to_owned();
         temp_img_jpg_path.push_str("/paradise/fly_sm.JPG");
-        let mut temp_img_png_path = tempdir.to_owned();
-        temp_img_png_path.push_str("/paradise/paragliding_sm.png");
         let mut temp_img_jpg_webp_path = tempdir.to_owned();
         temp_img_jpg_webp_path.push_str("/paradise/fly_sm.webp");
         let mut temp_img_png_webp_path = tempdir.to_owned();
         temp_img_png_webp_path.push_str("/paradise/paragliding_sm.webp");
 
         let temp_img_jpg = image::open(temp_img_jpg_path).unwrap();
-        let temp_img_png = image::open(temp_img_png_path).unwrap();
         let temp_img_jpg_webp = image::open(temp_img_jpg_webp_path).unwrap();
         let temp_img_png_webp = image::open(temp_img_png_webp_path).unwrap();
 
         let mut temp_img_jpg_thumbnail_path = tempdir.to_owned();
         temp_img_jpg_thumbnail_path.push_str("/paradise/fly_sm_thumbnail.JPG");
-        let mut temp_img_png_thumbnail_path = tempdir.to_owned();
-        temp_img_png_thumbnail_path.push_str("/paradise/paragliding_sm_thumbnail.png");
         let mut temp_img_jpg_webp_thumbnail_path = tempdir.to_owned();
         temp_img_jpg_webp_thumbnail_path.push_str("/paradise/fly_sm_thumbnail.webp");
         let mut temp_img_png_webp_thumbnail_path = tempdir.to_owned();
         temp_img_png_webp_thumbnail_path.push_str("/paradise/paragliding_sm_thumbnail.webp");
 
         let temp_img_jpg_thumbnail = image::open(temp_img_jpg_thumbnail_path).unwrap();
-        let temp_img_png_thumbnail = image::open(temp_img_png_thumbnail_path).unwrap();
         let temp_img_jpg_webp_thumbnail = image::open(temp_img_jpg_webp_thumbnail_path).unwrap();
         let temp_img_png_webp_thumbnail = image::open(temp_img_png_webp_thumbnail_path).unwrap();
 
         // valid testdata
         let img_jpg_ok = image::open("./testdata/test_ok_fly_sm.JPG").unwrap();
         let img_jpg_webp_ok = image::open("./testdata/test_ok_fly_sm.webp").unwrap();
-        let img_png_ok = image::open("./testdata/test_ok_paragliding_sm.png").unwrap();
         let img_png_webp_ok = image::open("./testdata/test_ok_paragliding_sm.webp").unwrap();
 
         assert_eq!(img_jpg_ok, temp_img_jpg);
         assert_eq!(img_jpg_webp_ok, temp_img_jpg_webp);
-        assert_eq!(img_png_ok, temp_img_png);
         assert_eq!(img_png_webp_ok, temp_img_png_webp);
 
         // valid testdata thumbnails
         let img_jpg_thumbnail_ok = image::open("./testdata/test_ok_fly_sm_thumbnail.JPG").unwrap();
         let img_jpg_webp_thumbnail_ok =
             image::open("./testdata/test_ok_fly_sm_thumbnail.webp").unwrap();
-        let img_png_thumbnail_ok =
-            image::open("./testdata/test_ok_paragliding_sm_thumbnail.png").unwrap();
         let img_png_webp_thumbnail_ok =
             image::open("./testdata/test_ok_paragliding_sm_thumbnail.webp").unwrap();
 
         assert_eq!(img_jpg_thumbnail_ok, temp_img_jpg_thumbnail);
         assert_eq!(img_jpg_webp_thumbnail_ok, temp_img_jpg_webp_thumbnail);
-        assert_eq!(img_png_thumbnail_ok, temp_img_png_thumbnail);
         assert_eq!(img_png_webp_thumbnail_ok, temp_img_png_webp_thumbnail);
         remove_dir_all(tempdir).unwrap();
     }
