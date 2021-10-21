@@ -2,7 +2,7 @@
 name = "image-optimizer"
 version = "0.3.0"
 authors = ["Daniel Naschberger <daniel@naschi.at>"]
-edition = "2018"
+edition = "2021"
 description = "A tool to optimize images for web."
 readme = "README.md"
 repository = "https://github.com/naschidaniel/image-optimizer/"
