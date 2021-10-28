@@ -40,15 +40,22 @@ fn create_filenames(
 /// The directory for the output is created an a `PathBuf` with the name of the folder is returned.
 fn create_output_dir(
     filename_original: &PathBuf,
-    source_folder: &String,
+    source: &String,
     destination_folder: &String,
 ) -> PathBuf {
-    let source_folder_pattern = source_folder.strip_prefix("./").unwrap();
+    let source_path = Path::new(source);
+    let parent = match source_path.is_file() {
+        true => source_path.parent().unwrap(),
+        false => source_path,
+    };
+
+    let source_pattern = parent.strip_prefix("./").unwrap();
     let input_sub_folders = filename_original
         .parent()
         .unwrap()
-        .strip_prefix(source_folder_pattern)
+        .strip_prefix(source_pattern)
         .unwrap();
+
     let output_path = Path::new(destination_folder).join(input_sub_folders);
     fs::create_dir_all(&output_path).unwrap();
     output_path
@@ -65,18 +72,18 @@ fn resize_image(
     let original_image = image::open(&filename_original).expect("Opening image original failed");
     let optimized_image = match thumbnail {
         true => image_optimizer::ImageOptimizer::new_thumbnail(
-        original_image.to_owned(),
-        filename_optimized_image.to_owned(),
-                nwidth.clone(),
-        *nquality,
+            original_image.to_owned(),
+            filename_optimized_image.to_owned(),
+            nwidth.clone(),
+            *nquality,
         ),
         false => image_optimizer::ImageOptimizer::new(
-        original_image.to_owned(),
-                filename_optimized_image.to_owned(),
-                nwidth.clone(),
-        *nquality,
+            original_image.to_owned(),
+            filename_optimized_image.to_owned(),
+            nwidth.clone(),
+            *nquality,
         ),
-        };   
+    };
     println!(
         "Converting {:?} (w: {:?}, h: {:?}) to {:?} (w: {:?}, h: {:?})",
         filename_original,
@@ -101,7 +108,7 @@ fn resize_image(
 }
 
 fn run_resize_images(
-    source_folder: &String,
+    source: &String,
     destination_folder: &String,
     suffix: &String,
     width: &u32,
@@ -114,48 +121,59 @@ fn run_resize_images(
         require_literal_separator: false,
         require_literal_leading_dot: false,
     };
-    let pattern_jpg = format!("{}/**/*.jpg", source_folder);
-    let pattern_jpeg = format!("{}/**/*.jpeg", source_folder);
-    let pattern_png = format!("{}/**/*.png", source_folder);
 
-    for entry in glob_with(&pattern_jpg, options)
-        .unwrap()
-        .chain(glob_with(&pattern_jpeg, options).unwrap())
-        .chain(glob_with(&pattern_png, options).unwrap())
-    {
-        match entry {
-            Ok(filename_original) => {
-                let output_path =
-                    create_output_dir(&filename_original, source_folder, destination_folder);
-                let filename_optimize_image =
-                    create_filenames(&filename_original, &output_path, suffix);
-                resize_image(
-                    &filename_original,
-                    &filename_optimize_image[0],
-                    &width,
-                    &quality,
-                    webpimage,
-                    &false,
-                )
-                .unwrap();
-                if thumbnail == &true {
-                    resize_image(
-                        &filename_original,
-                    &filename_optimize_image[1],
-                        &width,
-                        &quality,
-                        webpimage,
-                        thumbnail,
-                    )
-                    .unwrap();
-                }
-                println!(
-                    "The file '{:?}' has been converted successfully!",
-                    &filename_original
-                );
-            }
-            Err(e) => println!("{:?}", e),
+    let entries = match Path::new(source).is_file() {
+        true => glob_with(source, options)
+            .unwrap()
+            .flatten()
+            .collect::<Vec<PathBuf>>(),
+        false => {
+            let pattern_jpg = format!("{}/**/*.jpg", source);
+            let pattern_jpeg = format!("{}/**/*.jpeg", source);
+            let pattern_png = format!("{}/**/*.png", source);
+            glob_with(&pattern_jpg, options)
+                .unwrap()
+                .chain(glob_with(&pattern_jpeg, options).unwrap())
+                .chain(glob_with(&pattern_png, options).unwrap())
+                .flatten()
+                .collect::<Vec<PathBuf>>()
         }
+    };
+    println!("------------------------------------------");
+    if entries.len() == 1 {
+        println!("{} image will be optimized.", entries.len());
+    } else {
+        println!("{} images are optimized.", entries.len());
+    }
+    println!("------------------------------------------");
+    for filename_original in entries {
+        let output_path = create_output_dir(&filename_original, source, destination_folder);
+        let filename_optimize_image = create_filenames(&filename_original, &output_path, suffix);
+        resize_image(
+            &filename_original,
+            &filename_optimize_image[0],
+            &width,
+            &quality,
+            webpimage,
+            &false,
+        )
+        .unwrap();
+        if thumbnail == &true {
+            resize_image(
+                &filename_original,
+                &filename_optimize_image[1],
+                &width,
+                &quality,
+                webpimage,
+                thumbnail,
+            )
+            .unwrap();
+        }
+        println!(
+            "The file '{:?}' has been converted successfully!",
+            &filename_original
+        );
+        println!("------------------------------------------");
     }
 }
 
@@ -170,7 +188,7 @@ fn main() {
     .version(version)
     .author( env!("CARGO_PKG_AUTHORS"))
     .about(about.as_str())
-    .arg("--source=[source]>            'Sets the source folder: ./media'")
+    .arg("--source=[source]>            'Sets the source folder or a source file: ./media or ./media/paradise/fly.JPG'")
     .arg("--destination=[destination]>  'Sets the destination folder: ./testdata'")
     .arg("--suffix=[suffix]>            'Sets the suffix of the optimized images: sm'")
     .arg("--width=[width]>              'Sets the width of the optimized images: 500'")
@@ -179,24 +197,40 @@ fn main() {
     .arg("--thumbnail=[thumbnail]>      'Generate a copy in thumbnail of optimized images: true'")
     .get_matches();
 
-    let source_folder = &String::from(args.value_of("source").unwrap());
+    let source = &String::from(args.value_of("source").unwrap());
     let destination_folder = &String::from(args.value_of("destination").unwrap());
     let suffix = &String::from(args.value_of("suffix").unwrap());
-    let width = &String::from(args.value_of("width").unwrap()).parse::<u32>().unwrap();
-    let quality = &String::from(args.value_of("quality").unwrap()).parse::<u8>().unwrap();
-    let webpimage = &String::from(args.value_of("webpimage").unwrap()).parse::<bool>().unwrap();
-    let thumbnail = &String::from(args.value_of("thumbnail").unwrap()).parse::<bool>().unwrap();
-    
+    let width = &String::from(args.value_of("width").unwrap())
+        .parse::<u32>()
+        .unwrap();
+    let quality = &String::from(args.value_of("quality").unwrap())
+        .parse::<u8>()
+        .unwrap();
+    let webpimage = &String::from(args.value_of("webpimage").unwrap())
+        .parse::<bool>()
+        .unwrap();
+    let thumbnail = &String::from(args.value_of("thumbnail").unwrap())
+        .parse::<bool>()
+        .unwrap();
+
     println!("Running {} in the Version of {}", name, version);
-    println!("Source Folder: {}", source_folder);
+    println!("Source: {}", source);
     println!("Destination Folder: {}", destination_folder);
-    println!("Filename Suffix: {}",suffix);
+    println!("Filename Suffix: {}", suffix);
     println!("Width: {}", width);
     println!("Quality: {}", quality);
     println!("WebP-Image: {}", webpimage);
     println!("Thumbnail: {}", thumbnail);
 
-    run_resize_images(source_folder, destination_folder, suffix, width, quality, webpimage, thumbnail);
+    run_resize_images(
+        source,
+        destination_folder,
+        suffix,
+        width,
+        quality,
+        webpimage,
+        thumbnail,
+    );
     let end_time = Local::now().time();
     let diff = end_time - start_time;
     println!("Duration {} in Seconds", diff.num_seconds());
@@ -215,9 +249,9 @@ mod tests {
         let mut filename_original = PathBuf::new();
         filename_original.push("./foo/bar/baz.jpg");
         let output_path = tempdir.join("./moon/foo/bar/");
-        let temp_filenames = create_filenames(&filename_original, &output_path, &String::from("sm"));
-        let temp_filenames_ok = 
-        [
+        let temp_filenames =
+            create_filenames(&filename_original, &output_path, &String::from("sm"));
+        let temp_filenames_ok = [
             tempdir.clone().join("./moon/foo/bar/baz_sm.jpg"),
             tempdir.clone().join("./moon/foo/bar/baz_sm_thumbnail.jpg"),
         ];
@@ -233,15 +267,15 @@ mod tests {
         filename_original.push("media/foo/bar/baz.jpg");
         let input_folder = String::from("./media");
         let output_folder = tempdir.join("./moon").to_str().unwrap().to_string();
-        let temp_outputfolder = create_output_dir(&filename_original, &input_folder, &output_folder);
-        let temp_outputfolder_ok = tempdir.clone().join("moon/foo/bar");
-        assert_eq!(temp_outputfolder_ok, temp_outputfolder);
+        let temp_output_path = create_output_dir(&filename_original, &input_folder, &output_folder);
+        let temp_output_path_ok = tempdir.clone().join("moon/foo/bar");
+        assert_eq!(temp_output_path_ok, temp_output_path);
         remove_dir_all(tempdir).unwrap();
     }
 
-    /// The test checks whether the original images can be optimized.
+    /// The test checks whether the original images in a folder can be optimized.
     #[test]
-    fn test_resize_images() {
+    fn test_resize_images_in_folder() {
         let tempdir = String::from(tempdir().unwrap().into_path().to_str().unwrap());
 
         // optimize images
@@ -296,6 +330,34 @@ mod tests {
         assert_eq!(img_jpg_thumbnail_ok, temp_img_jpg_thumbnail);
         assert_eq!(img_jpg_webp_thumbnail_ok, temp_img_jpg_webp_thumbnail);
         assert_eq!(img_png_webp_thumbnail_ok, temp_img_png_webp_thumbnail);
+        remove_dir_all(tempdir).unwrap();
+    }
+
+    /// The test checks if on original image can be optimized.
+    #[test]
+    fn test_resize_image() {
+        let tempdir = String::from(tempdir().unwrap().into_path().to_str().unwrap());
+
+        // optimize images
+        run_resize_images(
+            &String::from("./media/paradise/fly.JPG"),
+            &tempdir,
+            &String::from("xxs"),
+            &250,
+            &90,
+            &true,
+            &false,
+        );
+
+        let mut temp_img_jpg_webp_path = tempdir.to_owned();
+        temp_img_jpg_webp_path.push_str("/fly_xxs.webp");
+
+        let temp_img_jpg_webp = image::open(temp_img_jpg_webp_path).unwrap();
+
+        // valid testdata
+        let img_jpg_webp_ok = image::open("./testdata/test_ok_fly_xxs.webp").unwrap();
+        assert_eq!(img_jpg_webp_ok, temp_img_jpg_webp);
+
         remove_dir_all(tempdir).unwrap();
     }
 }

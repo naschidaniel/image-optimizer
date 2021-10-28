@@ -34,11 +34,20 @@ curl -L https://github.com/naschidaniel/image-optimizer/releases/download/main/i
 The following command line arguments are required: {source} {destination} {suffix} {width} {quality} {webpimage} {thumbnail}.
 
 ```
-# Optimize images, create copy in WebP format and create a thumbnails of the images
-./image-optimizer --source ./media --destination ./testdata --suffix sm --width 500 --quality 90 --webpimage true --thumbnail true```
+# Optimize images in a folder, save a copy of the image in WebP format and create a thumbnails of the images
+./image-optimizer --source ./media --destination ./testdata --suffix sm --width 500 --quality 90 --webpimage true --thumbnail true
 ```
 
-The command will optimise all `*.jpg` and `*.png` files in the `./media` folder. In the folder `./testdata`, the optimized images will be created with a width of `500 px` and the quality of `90` in JPEG, PNG and [WebP](https://developers.google.com/speed/webp) Format. A square image section with a width of `500px`, height `500` and the postfix `thumbnail` will be generated. This image can be used as a preview for an image gallery.
+The command will optimize all `*.jpg` and `*.png` files in the `./media` folder. In the folder `./testdata`, the optimized images will be created with a width of `500 px` and the quality of `90` in JPEG, PNG and [WebP](https://developers.google.com/speed/webp) Format. A square image section with a width of `500px`, height `500` and the postfix `thumbnail` will be generated. This image can be used as a preview for an image gallery.
+
+```
+# Optimize one images, save a copy of the image in WebP format and create a thumbnails of the image
+./image-optimizer --source ./media/paradise/fly.JPG --destination ./testdata --suffix xxs --width 250 --quality 90 --webpimage true --thumbnail true
+```
+
+The command optimizes the image and creates a thumbnail and a copy in WebP format.
+
+
 ## Testdata
 
 ### Original File
@@ -92,6 +101,7 @@ An example of automatic image optimisiation for continuous integration and produ
 
 ## Changelog
 
+* 2021-10-28 Version 0.3.1 - Single images can now also be converted. 
 * 2021-09-17 Version 0.3.0 - Clap is used to parse command line arguments.
 * 2021-09-16 Version 0.2.2 - A square image section with the postfix thumbnail can be generated.
 * 2021-09-09 Version 0.2.0 - A copy of the resized file is saved in [WebP](https://developers.google.com/speed/webp) format.
