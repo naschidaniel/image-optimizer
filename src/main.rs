@@ -1,11 +1,11 @@
 mod image_optimizer;
 
-use chrono::Local;
 use clap::App;
 use glob::{glob_with, MatchOptions};
 use image::GenericImageView;
 use image::ImageError;
 use std::fs;
+use std::time::Instant;
 use std::path::{Path, PathBuf};
 
 /// The necessary file structure is created and the modified file name is returned as `PathBuf`.
@@ -178,7 +178,7 @@ fn run_resize_images(
 }
 
 fn main() {
-    let start_time = Local::now().time();
+    let start_time = Instant::now();
     let name = env!("CARGO_PKG_NAME");
     let version = env!("CARGO_PKG_VERSION");
     let about = format!("{} Check out the README on https://github.com/naschidaniel/image-optimizer/blob/main/README.md for more details.", env!("CARGO_PKG_DESCRIPTION"));
@@ -231,9 +231,8 @@ fn main() {
         webpimage,
         thumbnail,
     );
-    let end_time = Local::now().time();
-    let diff = end_time - start_time;
-    println!("Duration {} in Seconds", diff.num_seconds());
+    let end_time = start_time.elapsed();
+    println!("Duration {} in Seconds", end_time.as_secs());
 }
 
 #[cfg(test)]
