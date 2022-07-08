@@ -5,11 +5,10 @@ on:
     branches:
       - main
 
-name: rsfmt
+name: rsformat
 
 jobs:  
-  rsfmt:
-    name: rsfmt
+  rsformat:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources

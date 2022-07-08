@@ -1,7 +1,7 @@
-![[release]](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml/badge.svg) 
-![[rsaudit]](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsaudit.yml/badge.svg?name=rsaudit) 
-![[rstest]](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsformat.yml/badge.svg?name=rsformat)
-![[rstest]](https://github.com/naschidaniel/image-optimizer/actions/workflows/rstest.yml/badge.svg?name=rstest)
+[![release image-optimizer](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml)
+[![rsaudit](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsaudit.yml/badge.svg?branch=main)](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsaudit.yml)
+[![rsformat](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsformat.yml/badge.svg?branch=main)](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsformat.yml)
+[![rstest](https://github.com/naschidaniel/image-optimizer/actions/workflows/rstest.yml/badge.svg?branch=main)](https://github.com/naschidaniel/image-optimizer/actions/workflows/rstest.yml)
 
 # image-optimizer
 
