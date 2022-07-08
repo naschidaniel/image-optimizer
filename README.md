@@ -1,4 +1,4 @@
-[![release image-optimizer](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml)
+[![release v0.3.5](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml/badge.svg?branch=v0.3.5)](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml)
 [![rsaudit](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsaudit.yml/badge.svg?branch=main)](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsaudit.yml)
 [![rsbuild](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsbuild.yml/badge.svg?branch=main)](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsbuild.yml)
 [![rsformat](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsformat.yml/badge.svg?branch=main)](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsformat.yml)
