@@ -1,9 +1,9 @@
-use image::ImageEncoder;
-use image::codecs::png;
-use image::imageops::FilterType;
 use image::codecs::jpeg::JpegEncoder;
+use image::codecs::png;
 use image::codecs::png::PngEncoder;
+use image::imageops::FilterType;
 use image::DynamicImage;
+use image::ImageEncoder;
 use image::ImageError;
 use std::fs::File;
 use std::io::{BufWriter, Write};
