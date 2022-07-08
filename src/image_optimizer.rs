@@ -1,9 +1,9 @@
+use image::ImageEncoder;
 use image::codecs::png;
 use image::imageops::FilterType;
-use image::jpeg::JpegEncoder;
-use image::png::PngEncoder;
+use image::codecs::jpeg::JpegEncoder;
+use image::codecs::png::PngEncoder;
 use image::DynamicImage;
-use image::GenericImageView;
 use image::ImageError;
 use std::fs::File;
 use std::io::{BufWriter, Write};
@@ -59,7 +59,7 @@ impl ImageOptimizer {
         let file = File::create(&self.nfilename).unwrap();
         let ref mut buffer = BufWriter::new(file);
         JpegEncoder::new_with_quality(buffer, self.nquality).encode(
-            &self.nimage.to_bytes(),
+            &self.nimage.as_bytes().to_vec(),
             self.nwidth,
             self.nheight,
             self.nimage.color(),
@@ -73,8 +73,8 @@ impl ImageOptimizer {
             png::CompressionType::Default,
             png::FilterType::NoFilter,
         )
-        .encode(
-            &self.nimage.to_bytes(),
+        .write_image(
+            &self.nimage.as_bytes().to_vec(),
             self.nwidth,
             self.nheight,
             self.nimage.color(),
@@ -94,7 +94,7 @@ impl ImageOptimizer {
         );
         let mut buffer = File::create(filename).unwrap();
         let webp_image = Encoder::new(
-            &self.nimage.to_bytes(),
+            &self.nimage.as_bytes().to_vec(),
             PixelLayout::Rgb,
             self.nwidth,
             self.nheight,

@@ -1,8 +1,7 @@
 mod image_optimizer;
 
-use clap::App;
+use clap::{Arg, App};
 use glob::{glob_with, MatchOptions};
-use image::GenericImageView;
 use image::ImageError;
 use std::fs;
 use std::time::Instant;
@@ -188,13 +187,13 @@ fn main() {
     .version(version)
     .author( env!("CARGO_PKG_AUTHORS"))
     .about(about.as_str())
-    .arg("--source=[source]>            'Sets the source folder or a source file: ./media or ./media/paradise/fly.JPG'")
-    .arg("--destination=[destination]>  'Sets the destination folder: ./testdata'")
-    .arg("--suffix=[suffix]>            'Sets the suffix of the optimized images: sm'")
-    .arg("--width=[width]>              'Sets the width of the optimized images: 500'")
-    .arg("--quality=[quality]>          'Sets the quality of the optimized images: 90'")
-    .arg("--webpimage=[webpimage]>      'Generate a copy in WebP Format of optimized images: true'")
-    .arg("--thumbnail=[thumbnail]>      'Generate a copy in thumbnail of optimized images: true'")
+    .arg(Arg::new("source").help("Sets the source folder or a source file: ./media or ./media/paradise/fly.JPG"))
+    .arg(Arg::new("destination").help("Sets the destination folder: ./testdata"))
+    .arg(Arg::new("suffix").help("Sets the suffix of the optimized images: sm"))
+    .arg(Arg::new("width").help("Sets the width of the optimized images: 500"))
+    .arg(Arg::new("quality").help("Sets the quality of the optimized images: 90"))
+    .arg(Arg::new("webpimage").help("Generate a copy in WebP Format of optimized images: true"))
+    .arg(Arg::new("thumbnail").help("Generate a copy in thumbnail of optimized images: true"))
     .get_matches();
 
     let source = &String::from(args.value_of("source").unwrap());
@@ -240,6 +239,12 @@ mod tests {
     use super::*;
     use fs::remove_dir_all;
     use tempfile::tempdir;
+
+    // Determine operating system
+    const PLATFORM: &str = match cfg!(windows) {
+        true => "windows",
+        false => "unix",
+    };
 
     /// The test checks if the filenames for the optimized image and the thumbnail can be generated.
     #[test]
@@ -311,20 +316,18 @@ mod tests {
         let temp_img_png_webp_thumbnail = image::open(temp_img_png_webp_thumbnail_path).unwrap();
 
         // valid testdata
-        let img_jpg_ok = image::open("./testdata/test_ok_fly_sm.JPG").unwrap();
-        let img_jpg_webp_ok = image::open("./testdata/test_ok_fly_sm.webp").unwrap();
-        let img_png_webp_ok = image::open("./testdata/test_ok_paragliding_sm.webp").unwrap();
+        let img_jpg_ok = image::open(format!("./testdata/test_ok_fly_sm.{PLATFORM}.JPG")).unwrap();
+        let img_jpg_webp_ok = image::open(format!("./testdata/test_ok_fly_sm.{PLATFORM}.webp")).unwrap();
+        let img_png_webp_ok = image::open(format!("./testdata/test_ok_paragliding_sm.{PLATFORM}.webp")).unwrap();
 
         assert_eq!(img_jpg_ok, temp_img_jpg);
         assert_eq!(img_jpg_webp_ok, temp_img_jpg_webp);
         assert_eq!(img_png_webp_ok, temp_img_png_webp);
 
         // valid testdata thumbnails
-        let img_jpg_thumbnail_ok = image::open("./testdata/test_ok_fly_sm_thumbnail.JPG").unwrap();
-        let img_jpg_webp_thumbnail_ok =
-            image::open("./testdata/test_ok_fly_sm_thumbnail.webp").unwrap();
-        let img_png_webp_thumbnail_ok =
-            image::open("./testdata/test_ok_paragliding_sm_thumbnail.webp").unwrap();
+        let img_jpg_thumbnail_ok = image::open(format!("./testdata/test_ok_fly_sm_thumbnail.{PLATFORM}.JPG")).unwrap();
+        let img_jpg_webp_thumbnail_ok = image::open(format!("./testdata/test_ok_fly_sm_thumbnail.{PLATFORM}.webp")).unwrap();
+        let img_png_webp_thumbnail_ok = image::open(format!("./testdata/test_ok_paragliding_sm_thumbnail.{PLATFORM}.webp")).unwrap();
 
         assert_eq!(img_jpg_thumbnail_ok, temp_img_jpg_thumbnail);
         assert_eq!(img_jpg_webp_thumbnail_ok, temp_img_jpg_webp_thumbnail);
@@ -353,8 +356,8 @@ mod tests {
 
         let temp_img_jpg_webp = image::open(temp_img_jpg_webp_path).unwrap();
 
-        // valid testdata
-        let img_jpg_webp_ok = image::open("./testdata/test_ok_fly_xxs.webp").unwrap();
+        let img_jpg_webp_ok = image::open(format!("./testdata/test_ok_fly_xxs.{PLATFORM}.webp")).unwrap();
+
         assert_eq!(img_jpg_webp_ok, temp_img_jpg_webp);
 
         remove_dir_all(tempdir).unwrap();
