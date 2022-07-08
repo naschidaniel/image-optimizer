@@ -1,9 +1,10 @@
-name: release image-optimizer
 
 on:
   push:
     tags:
       - 'v*'
+
+name: release
 
 jobs:
   release:
