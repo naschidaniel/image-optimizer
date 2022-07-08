@@ -1,9 +1,11 @@
-name: release image-optimizer
-
 on:
+  pull_request:
+    types: [opened, synchronize, reopened]
   push:
-    branch:
+    branches:
       - main
+
+name: rsbuild image-optimizer
 
 jobs:
   rsbuild-linux:
