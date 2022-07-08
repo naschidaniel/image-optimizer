@@ -49,7 +49,7 @@ jobs:
           args: --release --all-features
       - name: Upload Release Linux Asset
         if: matrix.platform == 'linux-latest'
-        id: upload-release-asset-windows
+        id: upload-release-asset-linux
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
