@@ -38,6 +38,7 @@ jobs:
         with:
           command: check
       - name: Run cargo test
+        if: matrix.platform != 'macos-latest'
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
