@@ -5,7 +5,7 @@ on:
     branches:
       - main
 
-name: rsbuild image-optimizer
+name: rsbuild
 
 jobs:
   rsbuild-linux:
