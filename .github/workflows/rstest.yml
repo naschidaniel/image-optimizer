@@ -22,7 +22,7 @@ jobs:
         with:
           command: test
 
-  release-windows:
+  rstest-windows:
     runs-on: windows-latest
     steps:
       - name: Checkout sources

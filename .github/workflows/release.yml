@@ -22,6 +22,11 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1
+        continue-on-error: false
+        with:
+          command: test
       - name: Rust build for Linux
         uses: actions-rs/cargo@v1
         with:
@@ -51,6 +56,11 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1
+        continue-on-error: false
+        with:
+          command: test
       - name: Rust build for Windows
         uses: actions-rs/cargo@v1
         with:
