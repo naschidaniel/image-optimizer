@@ -44,7 +44,7 @@ jobs:
         continue-on-error: false
         with:
           command: test
-      - name: Rust build for Linux
+      - name: Rust build
         uses: actions-rs/cargo@v1
         with:
           command: build
