@@ -3,9 +3,28 @@ on: [push, pull_request]
 name: cargo test
 
 jobs:  
-  rstest:
+  rstest-linux:
     name: rstest
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Run cargo test
+        uses: actions-rs/cargo@v1
+        continue-on-error: false
+        with:
+          command: test
+
+  release-windows:
+    runs-on: windows-latest
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
