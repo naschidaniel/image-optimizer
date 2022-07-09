@@ -1,4 +1,4 @@
-[![release v0.3.5](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml/badge.svg?branch=v0.3.5)](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml)
+[![release v0.3.6](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml/badge.svg?branch=v0.3.6)](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml)
 [![rsaudit](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsaudit.yml/badge.svg?branch=main)](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsaudit.yml)
 [![rsbuild](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsbuild.yml/badge.svg?branch=main)](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsbuild.yml)
 [![rsformat](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsformat.yml/badge.svg?branch=main)](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsformat.yml)
@@ -11,19 +11,19 @@ The tool is written in Rust.
 
 ## Get the latest release of the image-optimizer
 
-The required binary for the platform can be downloaded from [Releases: v0.3.5](https://github.com/naschidaniel/image-optimizer/releases/tag/v0.3.5).
+The required binary for the platform can be downloaded from [Releases: v0.3.6](https://github.com/naschidaniel/image-optimizer/releases/tag/v0.3.6).
 
 ```
 # Linux 
-curl -L https://github.com/naschidaniel/image-optimizer/releases/download/v0.3.5/image-optimizer-linux --output image-optimizer && chmod +x image-optimizer
+curl -L https://github.com/naschidaniel/image-optimizer/releases/download/v0.3.6/image-optimizer-linux --output image-optimizer && chmod +x image-optimizer
 ./image-optimizer --version
 
 # MacOs
-curl -L https://github.com/naschidaniel/image-optimizer/releases/download/v0.3.5/image-optimizer-macos --output image-optimizer && chmod +x image-optimizer
+curl -L https://github.com/naschidaniel/image-optimizer/releases/download/v0.3.6/image-optimizer-macos --output image-optimizer && chmod +x image-optimizer
 ./image-optimizer
 
 # Windows
-curl -L https://github.com/naschidaniel/image-optimizer/releases/download/v0.3.5/image-optimizer.exe --output image-optimizer.exe
+curl -L https://github.com/naschidaniel/image-optimizer/releases/download/v0.3.6/image-optimizer.exe --output image-optimizer.exe
 image-optimizer.exe --version
 
 ```
