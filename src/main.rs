@@ -1,11 +1,44 @@
 mod image_optimizer;
 
-use clap::{App, Arg};
+use clap::Parser;
 use glob::{glob_with, MatchOptions};
 use image::ImageError;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
+
+/// A tool to optimize images for web. Check out the README on https://github.com/naschidaniel/image-optimizer/blob/main/README.md for more details
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+struct Args {
+    /// Sets the source folder or a source file: ./media or ./media/paradise/fly.JPG
+    #[clap(short, long, value_parser)]
+    destination: String,
+
+    /// "Sets the source folder or a source file: ./media or ./media/paradise/fly.JPG"
+    #[clap(short = 'r', long, value_parser)]
+    source: String,
+
+    /// Sets the suffix of the optimized images: sm
+    #[clap(short, long, value_parser)]
+    suffix: String,
+
+    /// Generate a copy in thumbnail of optimized images
+    #[clap(short, long, value_parser)]
+    thumbnail: String,
+
+    /// Sets the quality of the optimized images
+    #[clap(short, long, value_parser)]
+    quality: u8,
+
+    /// Generate a copy in WebP Format of optimized images
+    #[clap(short = 'x', long, value_parser)]
+    webpimage: String,
+
+    /// Sets the width of the optimized images
+    #[clap(short, long, value_parser)]
+    width: u32,
+}
 
 /// The necessary file structure is created and the modified file name is returned as `PathBuf`.
 fn create_filenames(
@@ -178,61 +211,32 @@ fn run_resize_images(
 
 fn main() {
     let start_time = Instant::now();
-    let name = env!("CARGO_PKG_NAME");
-    let version = env!("CARGO_PKG_VERSION");
-    let about = format!("{} Check out the README on https://github.com/naschidaniel/image-optimizer/blob/main/README.md for more details.", env!("CARGO_PKG_DESCRIPTION"));
 
     // Command line arguments
-    let args = App::new(name)
-        .version(version)
-        .author(env!("CARGO_PKG_AUTHORS"))
-        .about(about.as_str())
-        .arg(
-            Arg::new("source").help(
-                "Sets the source folder or a source file: ./media or ./media/paradise/fly.JPG",
-            ),
-        )
-        .arg(Arg::new("destination").help("Sets the destination folder: ./testdata"))
-        .arg(Arg::new("suffix").help("Sets the suffix of the optimized images: sm"))
-        .arg(Arg::new("width").help("Sets the width of the optimized images: 500"))
-        .arg(Arg::new("quality").help("Sets the quality of the optimized images: 90"))
-        .arg(Arg::new("webpimage").help("Generate a copy in WebP Format of optimized images: true"))
-        .arg(Arg::new("thumbnail").help("Generate a copy in thumbnail of optimized images: true"))
-        .get_matches();
+    let args = Args::parse();
+    let webpimage = args.webpimage.parse::<bool>().unwrap();
+    let thumbnail = args.thumbnail.parse::<bool>().unwrap();
 
-    let source = &String::from(args.value_of("source").unwrap());
-    let destination_folder = &String::from(args.value_of("destination").unwrap());
-    let suffix = &String::from(args.value_of("suffix").unwrap());
-    let width = &String::from(args.value_of("width").unwrap())
-        .parse::<u32>()
-        .unwrap();
-    let quality = &String::from(args.value_of("quality").unwrap())
-        .parse::<u8>()
-        .unwrap();
-    let webpimage = &String::from(args.value_of("webpimage").unwrap())
-        .parse::<bool>()
-        .unwrap();
-    let thumbnail = &String::from(args.value_of("thumbnail").unwrap())
-        .parse::<bool>()
-        .unwrap();
-
-    println!("Running {} in the Version of {}", name, version);
-    println!("Source: {}", source);
-    println!("Destination Folder: {}", destination_folder);
-    println!("Filename Suffix: {}", suffix);
-    println!("Width: {}", width);
-    println!("Quality: {}", quality);
+    println!(
+        "Running image-optimizer version {}",
+        env!("CARGO_PKG_VERSION")
+    );
+    println!("Source: {}", &args.source);
+    println!("Destination folder: {}", &args.destination);
+    println!("Filename Suffix: {}", &args.suffix);
+    println!("Width: {}", &args.width);
+    println!("Quality: {}", &args.quality);
     println!("WebP-Image: {}", webpimage);
     println!("Thumbnail: {}", thumbnail);
 
     run_resize_images(
-        source,
-        destination_folder,
-        suffix,
-        width,
-        quality,
-        webpimage,
-        thumbnail,
+        &args.source,
+        &args.destination,
+        &args.suffix,
+        &args.width,
+        &args.quality,
+        &webpimage,
+        &thumbnail,
     );
     let end_time = start_time.elapsed();
     println!("Duration {} in Seconds", end_time.as_secs());
