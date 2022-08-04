@@ -68,21 +68,21 @@ The command optimizes the image and creates a thumbnail and a copy in WebP forma
 - Hight: 375 px
 - Size: 75,6 kb
 
-![Converted JPG File](./testdata/test_ok_fly_sm.JPG)
+![Converted JPG File](./testdata/fly_sm.unix.JPG)
 
 #### Converted WebP File
 - Width: 500 px
 - Hight: 375 px
 - Size: 54,8 kb
 
-![Converted WebP File](./testdata/test_ok_fly_sm.webp)
+![Converted WebP File](./testdata/fly_sm.unix.webp)
 
 #### Converted Thumbnail in WebP Format
 - Width: 500 px
 - Hight: 500 px
 - Size: 63,5 kb
 
-![Converted WebP File](./testdata/test_ok_fly_sm_thumbnail.webp)
+![Converted WebP File](./testdata/fly_thumbnail_sm.unix.webp)
 ## Development
 
 ```
@@ -104,6 +104,7 @@ An example of automatic image optimisiation for continuous integration and produ
 
 ## Changelog
 
+* 2022-07-09 Version 0.3.6 - Refact command line parser Clap. 
 * 2021-10-28 Version 0.3.1 - Single images can now also be converted. 
 * 2021-09-17 Version 0.3.0 - Clap is used to parse command line arguments.
 * 2021-09-16 Version 0.2.2 - A square image section with the postfix thumbnail can be generated.

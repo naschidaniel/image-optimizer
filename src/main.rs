@@ -47,22 +47,11 @@ fn create_filenames(
     suffix: &String,
 ) -> [PathBuf; 2] {
     let file_stem = filename_original.file_stem().unwrap().to_str().unwrap();
-    let file_stem_optimize_image = format!("{}_{}", file_stem, suffix);
-    let file_stem_thumbnail_optimize_image = format!("{}_{}_thumbnail", file_stem, suffix);
-    let filename_optimize_image = filename_original
-        .file_name()
-        .unwrap()
-        .to_str()
-        .unwrap()
-        .to_owned()
-        .replace(file_stem, &*file_stem_optimize_image);
-    let filename_thumbnail_optimize_image = filename_original
-        .file_name()
-        .unwrap()
-        .to_str()
-        .unwrap()
-        .to_owned()
-        .replace(file_stem, &*file_stem_thumbnail_optimize_image);
+    let file_extension = filename_original.extension().unwrap().to_str().unwrap();
+
+    let filename_optimize_image = format!("{}_{}.{}", file_stem, suffix, file_extension);
+    let filename_thumbnail_optimize_image =
+        format!("{}_thumbnail_{}.{}", file_stem, suffix, file_extension);
     [
         output_path.clone().join(filename_optimize_image),
         output_path.clone().join(filename_thumbnail_optimize_image),
@@ -180,10 +169,10 @@ fn run_resize_images(
     println!("------------------------------------------");
     for filename_original in entries {
         let output_path = create_output_dir(&filename_original, source, destination_folder);
-        let filename_optimize_image = create_filenames(&filename_original, &output_path, suffix);
+        let filenames_optimize_image = create_filenames(&filename_original, &output_path, suffix);
         resize_image(
             &filename_original,
-            &filename_optimize_image[0],
+            &filenames_optimize_image[0],
             &width,
             &quality,
             webpimage,
@@ -193,7 +182,7 @@ fn run_resize_images(
         if thumbnail == &true {
             resize_image(
                 &filename_original,
-                &filename_optimize_image[1],
+                &filenames_optimize_image[1],
                 &width,
                 &quality,
                 webpimage,
@@ -265,7 +254,7 @@ mod tests {
             create_filenames(&filename_original, &output_path, &String::from("sm"));
         let temp_filenames_ok = [
             tempdir.clone().join("./moon/foo/bar/baz_sm.jpg"),
-            tempdir.clone().join("./moon/foo/bar/baz_sm_thumbnail.jpg"),
+            tempdir.clone().join("./moon/foo/bar/baz_thumbnail_sm.jpg"),
         ];
         assert_eq!(temp_filenames_ok, temp_filenames);
         remove_dir_all(tempdir).unwrap();
@@ -313,38 +302,33 @@ mod tests {
         let temp_img_png_webp = image::open(temp_img_png_webp_path).unwrap();
 
         let mut temp_img_jpg_thumbnail_path = tempdir.to_owned();
-        temp_img_jpg_thumbnail_path.push_str("/paradise/fly_sm_thumbnail.JPG");
+        temp_img_jpg_thumbnail_path.push_str("/paradise/fly_thumbnail_sm.JPG");
         let mut temp_img_jpg_webp_thumbnail_path = tempdir.to_owned();
-        temp_img_jpg_webp_thumbnail_path.push_str("/paradise/fly_sm_thumbnail.webp");
+        temp_img_jpg_webp_thumbnail_path.push_str("/paradise/fly_thumbnail_sm.webp");
         let mut temp_img_png_webp_thumbnail_path = tempdir.to_owned();
-        temp_img_png_webp_thumbnail_path.push_str("/paradise/paragliding_sm_thumbnail.webp");
+        temp_img_png_webp_thumbnail_path.push_str("/paradise/paragliding_thumbnail_sm.webp");
 
         let temp_img_jpg_thumbnail = image::open(temp_img_jpg_thumbnail_path).unwrap();
         let temp_img_jpg_webp_thumbnail = image::open(temp_img_jpg_webp_thumbnail_path).unwrap();
         let temp_img_png_webp_thumbnail = image::open(temp_img_png_webp_thumbnail_path).unwrap();
 
         // valid testdata
-        let img_jpg_ok = image::open(format!("./testdata/test_ok_fly_sm.{PLATFORM}.JPG")).unwrap();
-        let img_jpg_webp_ok =
-            image::open(format!("./testdata/test_ok_fly_sm.{PLATFORM}.webp")).unwrap();
+        let img_jpg_ok = image::open(format!("./testdata/fly_sm.{PLATFORM}.JPG")).unwrap();
+        let img_jpg_webp_ok = image::open(format!("./testdata/fly_sm.{PLATFORM}.webp")).unwrap();
         let img_png_webp_ok =
-            image::open(format!("./testdata/test_ok_paragliding_sm.{PLATFORM}.webp")).unwrap();
+            image::open(format!("./testdata/paragliding_sm.{PLATFORM}.webp")).unwrap();
 
         assert_eq!(img_jpg_ok, temp_img_jpg);
         assert_eq!(img_jpg_webp_ok, temp_img_jpg_webp);
         assert_eq!(img_png_webp_ok, temp_img_png_webp);
 
         // valid testdata thumbnails
-        let img_jpg_thumbnail_ok = image::open(format!(
-            "./testdata/test_ok_fly_sm_thumbnail.{PLATFORM}.JPG"
-        ))
-        .unwrap();
-        let img_jpg_webp_thumbnail_ok = image::open(format!(
-            "./testdata/test_ok_fly_sm_thumbnail.{PLATFORM}.webp"
-        ))
-        .unwrap();
+        let img_jpg_thumbnail_ok =
+            image::open(format!("./testdata/fly_thumbnail_sm.{PLATFORM}.JPG")).unwrap();
+        let img_jpg_webp_thumbnail_ok =
+            image::open(format!("./testdata/fly_thumbnail_sm.{PLATFORM}.webp")).unwrap();
         let img_png_webp_thumbnail_ok = image::open(format!(
-            "./testdata/test_ok_paragliding_sm_thumbnail.{PLATFORM}.webp"
+            "./testdata/paragliding_thumbnail_sm.{PLATFORM}.webp"
         ))
         .unwrap();
 
@@ -375,8 +359,7 @@ mod tests {
 
         let temp_img_jpg_webp = image::open(temp_img_jpg_webp_path).unwrap();
 
-        let img_jpg_webp_ok =
-            image::open(format!("./testdata/test_ok_fly_xxs.{PLATFORM}.webp")).unwrap();
+        let img_jpg_webp_ok = image::open(format!("./testdata/fly_xxs.{PLATFORM}.webp")).unwrap();
 
         assert_eq!(img_jpg_webp_ok, temp_img_jpg_webp);
 
