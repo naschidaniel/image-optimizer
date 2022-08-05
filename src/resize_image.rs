@@ -4,45 +4,71 @@ use image::ImageError;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-pub struct ResizeImage {}
+#[derive(Debug)]
+pub struct ResizeImage {
+    pub dest_file: PathBuf,
+    pub dest_parent: PathBuf,
+    pub dest_thumbnail: PathBuf,
+    pub file_name_src: String,
+    pub file_name_thumbnail_webp: String,
+    pub file_name_thumbnail: String,
+    pub file_name_webp: String,
+    pub file_name: String,
+    pub file_type: String,
+    pub suffix: String,
+}
 
 impl ResizeImage {
     /// The necessary file structure is created and the modified file name is returned as `PathBuf`.
-    fn create_file_names(file_name_src: &Path, dest_path: &Path, suffix: &String) -> [PathBuf; 2] {
+    fn new(
+        file_name_src: &PathBuf,
+        source_path: &PathBuf,
+        destination: &PathBuf,
+        suffix: &String,
+    ) -> ResizeImage {
+        let source_parent_path = match source_path.is_file() {
+            true => fs::canonicalize(file_name_src.parent().unwrap()).unwrap(),
+            false => fs::canonicalize(&source_path).unwrap(),
+        };
+
+        let rudi = fs::canonicalize(file_name_src).unwrap();
+        println!("source:             {:?}", source_path);
+        println!("source_parent_path: {:?}", source_parent_path);
+        println!("destination:        {:?}", destination);
+        println!("file_name_src:      {:?}", rudi);
+        println!("-------");
+        let source_path_sub_folders = rudi
+            .parent()
+            .unwrap()
+            .strip_prefix(source_parent_path)
+            .unwrap();
+
+        let dest_path = Path::new(destination).join(source_path_sub_folders);
+        fs::create_dir_all(&dest_path).unwrap();
+
         let file_stem = file_name_src.file_stem().unwrap().to_str().unwrap();
         let file_extension = file_name_src.extension().unwrap().to_str().unwrap();
 
-        let file_name_dest = format!("{}_{}.{}", file_stem, suffix, file_extension);
-        let file_name_thumbnail_dest =
-            format!("{}_thumbnail_{}.{}", file_stem, suffix, file_extension);
-        [
-            dest_path.join(file_name_dest),
-            dest_path.join(file_name_thumbnail_dest),
-        ]
-    }
+        let file_name = format!("{}_{}.{}", &file_stem, suffix, file_extension);
+        let file_name_thumbnail = format!("{}_thumbnail_{}.{}", &file_stem, suffix, file_extension);
 
-    /// The directory for the output is created an a `PathBuf` with the name of the folder is returned.
-    fn create_output_dir(
-        file_name_src: &Path,
-        source: &String,
-        destination_folder: &String,
-    ) -> PathBuf {
-        let source_path = Path::new(source);
-        let parent = match source_path.is_file() {
-            true => source_path.parent().unwrap(),
-            false => source_path,
-        };
-
-        let source_pattern = parent.strip_prefix("./").unwrap();
-        let input_sub_folders = file_name_src
-            .parent()
-            .unwrap()
-            .strip_prefix(source_pattern)
-            .unwrap();
-
-        let dest_path = Path::new(destination_folder).join(input_sub_folders);
-        fs::create_dir_all(&dest_path).unwrap();
-        dest_path
+        ResizeImage {
+            dest_file: dest_path.join(&file_name),
+            dest_parent: dest_path.to_owned(),
+            dest_thumbnail: dest_path.join(file_name_thumbnail),
+            file_name,
+            file_name_src: file_name_src
+                .file_name()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_string(),
+            file_name_thumbnail: format!("{}_thumbnail_{}.{}", file_stem, suffix, file_extension),
+            file_name_thumbnail_webp: format!("{}_thumbnail_{}.webp", file_stem, suffix),
+            file_name_webp: format!("{}_{}.{}", file_stem, suffix, file_extension),
+            file_type: file_extension.to_lowercase(),
+            suffix: suffix.to_string(),
+        }
     }
 
     fn resize_image(
@@ -93,7 +119,7 @@ impl ResizeImage {
 
     pub fn run_resize_images(
         source: &String,
-        destination_folder: &String,
+        destination: &String,
         suffix: &String,
         width: &u32,
         quality: &u8,
@@ -130,14 +156,14 @@ impl ResizeImage {
             println!("{} images are optimized.", entries.len());
         }
         println!("------------------------------------------");
+        let source_path = fs::canonicalize(&source).unwrap();
+        let destioname_path = fs::canonicalize(&destination).unwrap();
         for file_name_src in entries {
-            let dest_path =
-                ResizeImage::create_output_dir(&file_name_src, source, destination_folder);
-            let file_names_optimize_image =
-                ResizeImage::create_file_names(&file_name_src, &dest_path, suffix);
+            let image = ResizeImage::new(&file_name_src, &source_path, &destioname_path, suffix);
+            println!("{:?}", image);
             ResizeImage::resize_image(
                 &file_name_src,
-                &file_names_optimize_image[0],
+                &image.dest_file,
                 width,
                 quality,
                 webpimage,
@@ -147,7 +173,7 @@ impl ResizeImage {
             if thumbnail == &true {
                 ResizeImage::resize_image(
                     &file_name_src,
-                    &file_names_optimize_image[1],
+                    &image.dest_thumbnail,
                     width,
                     quality,
                     webpimage,
@@ -168,7 +194,7 @@ impl ResizeImage {
 mod tests {
     use super::*;
     use std::fs::remove_dir_all;
-    use std::path::PathBuf;
+
     use tempfile::tempdir;
 
     // Determine operating system
@@ -179,34 +205,19 @@ mod tests {
 
     /// The test checks if the file_names for the optimized image and the thumbnail can be generated.
     #[test]
-    fn test_create_file_names() {
+    fn test_new() {
         let tempdir = tempdir().unwrap().into_path();
-        let mut file_name_src = PathBuf::new();
-        file_name_src.push("./foo/bar/baz.jpg");
-        let dest_path = tempdir.join("./moon/foo/bar/");
-        let temp_file_names =
-            ResizeImage::create_file_names(&file_name_src, &dest_path, &String::from("sm"));
-        let temp_file_names_ok = [
-            tempdir.join("./moon/foo/bar/baz_sm.jpg"),
-            tempdir.join("./moon/foo/bar/baz_thumbnail_sm.jpg"),
-        ];
-        assert_eq!(temp_file_names_ok, temp_file_names);
-        remove_dir_all(tempdir).unwrap();
-    }
-
-    /// The test checks if the destination folder structure can be created.
-    #[test]
-    fn test_create_output_dir() {
-        let tempdir = tempdir().unwrap().into_path();
-        let mut file_name_src = PathBuf::new();
-        file_name_src.push("media/foo/bar/baz.jpg");
-        let input_folder = String::from("./media");
-        let output_folder = tempdir.join("./moon").to_str().unwrap().to_string();
-        let temp_dest_path =
-            ResizeImage::create_output_dir(&file_name_src, &input_folder, &output_folder);
-        let temp_dest_path_ok = tempdir.join("moon/foo/bar");
-        assert_eq!(temp_dest_path_ok, temp_dest_path);
-        remove_dir_all(tempdir).unwrap();
+        let file_name_src = tempdir.join("spool/foo/bar/baz.jpg");
+        fs::create_dir_all(&file_name_src.parent().unwrap()).unwrap();
+        fs::copy("media/paradise/fly.JPG", &file_name_src).unwrap();
+        let source = tempdir.join("spool");
+        let destination = tempdir.join("moon");
+        let image = ResizeImage::new(&file_name_src, &source, &destination, &String::from("sm"));
+        assert_eq!(tempdir.join("moon/foo/bar/baz_sm.jpg"), image.dest_file);
+        assert_eq!(
+            tempdir.join("moon/foo/bar/baz_thumbnail_sm.jpg"),
+            image.dest_thumbnail
+        );
     }
 
     /// The test checks whether the original images in a folder can be optimized.
@@ -216,7 +227,7 @@ mod tests {
 
         // optimize images
         ResizeImage::run_resize_images(
-            &String::from("./media"),
+            &String::from("media"),
             &tempdir,
             &String::from("sm"),
             &500,
@@ -275,12 +286,12 @@ mod tests {
 
     /// The test checks if on original image can be optimized.
     #[test]
-    fn test_resize_image() {
-        let tempdir = String::from(tempdir().unwrap().into_path().to_str().unwrap());
+    fn test_resize_one_image() {
+        let tempdir = tempdir().unwrap().into_path().to_str().unwrap().to_string();
 
         // optimize images
         ResizeImage::run_resize_images(
-            &String::from("./media/paradise/fly.JPG"),
+            &String::from("media/paradise/fly.JPG"),
             &tempdir,
             &String::from("xxs"),
             &250,
