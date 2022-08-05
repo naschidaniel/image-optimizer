@@ -13,8 +13,8 @@ use std::time::Instant;
 
 /// The necessary file structure is created and the modified file name is returned as `PathBuf`.
 fn create_filenames(
-    filename_original: &PathBuf,
-    output_path: &PathBuf,
+    filename_original: &Path,
+    output_path: &Path,
     suffix: &String,
 ) -> [PathBuf; 2] {
     let file_stem = filename_original.file_stem().unwrap().to_str().unwrap();
@@ -24,14 +24,14 @@ fn create_filenames(
     let filename_thumbnail_optimize_image =
         format!("{}_thumbnail_{}.{}", file_stem, suffix, file_extension);
     [
-        output_path.clone().join(filename_optimize_image),
-        output_path.clone().join(filename_thumbnail_optimize_image),
+        output_path.join(filename_optimize_image),
+        output_path.join(filename_thumbnail_optimize_image),
     ]
 }
 
 /// The directory for the output is created an a `PathBuf` with the name of the folder is returned.
 fn create_output_dir(
-    filename_original: &PathBuf,
+    filename_original: &Path,
     source: &String,
     destination_folder: &String,
 ) -> PathBuf {

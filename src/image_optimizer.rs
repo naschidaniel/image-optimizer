@@ -100,6 +100,6 @@ impl ImageOptimizer {
             self.nheight,
         )
         .encode(self.nquality as f32);
-        buffer.write(&*webp_image).unwrap();
+        buffer.write_all(&*webp_image).unwrap();
     }
 }
