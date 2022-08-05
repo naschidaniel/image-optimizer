@@ -1,6 +1,8 @@
+mod command_parser;
 mod image_optimizer;
 
 use clap::Parser;
+use command_parser::Args;
 use glob::{glob_with, MatchOptions};
 use image::ImageError;
 use std::fs;
@@ -8,37 +10,6 @@ use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 /// A tool to optimize images for web. Check out the README on https://github.com/naschidaniel/image-optimizer/blob/main/README.md for more details
-#[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
-struct Args {
-    /// Sets the source folder or a source file: ./media or ./media/paradise/fly.JPG
-    #[clap(short, long, value_parser)]
-    destination: String,
-
-    /// "Sets the source folder or a source file: ./media or ./media/paradise/fly.JPG"
-    #[clap(short = 'r', long, value_parser)]
-    source: String,
-
-    /// Sets the suffix of the optimized images: sm
-    #[clap(short, long, value_parser)]
-    suffix: String,
-
-    /// Generate a copy in thumbnail of optimized images
-    #[clap(short, long, value_parser)]
-    thumbnail: String,
-
-    /// Sets the quality of the optimized images
-    #[clap(short, long, value_parser)]
-    quality: u8,
-
-    /// Generate a copy in WebP Format of optimized images
-    #[clap(short = 'x', long, value_parser)]
-    webpimage: String,
-
-    /// Sets the width of the optimized images
-    #[clap(short, long, value_parser)]
-    width: u32,
-}
 
 /// The necessary file structure is created and the modified file name is returned as `PathBuf`.
 fn create_filenames(
