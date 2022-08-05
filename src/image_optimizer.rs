@@ -87,12 +87,12 @@ impl ImageOptimizer {
             .to_owned()
             .unwrap()
             .replace(&self.extension(), "webp");
-        let filename = Path::new(file);
+        let dest = Path::new(file);
         println!(
             "Creating WebP image {:?} (w: {:?}, h: {:?}), quality: {:?}",
-            filename, self.nwidth, self.nheight, self.nquality
+            dest, self.nwidth, self.nheight, self.nquality
         );
-        let mut buffer = File::create(filename).unwrap();
+        let mut buffer = File::create(dest).unwrap();
         let webp_image = Encoder::new(
             self.nimage.as_bytes(),
             PixelLayout::Rgb,

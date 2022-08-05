@@ -8,26 +8,22 @@ pub struct ResizeImage {}
 
 impl ResizeImage {
     /// The necessary file structure is created and the modified file name is returned as `PathBuf`.
-    fn create_filenames(
-        filename_original: &Path,
-        output_path: &Path,
-        suffix: &String,
-    ) -> [PathBuf; 2] {
-        let file_stem = filename_original.file_stem().unwrap().to_str().unwrap();
-        let file_extension = filename_original.extension().unwrap().to_str().unwrap();
+    fn create_file_names(file_name_src: &Path, dest_path: &Path, suffix: &String) -> [PathBuf; 2] {
+        let file_stem = file_name_src.file_stem().unwrap().to_str().unwrap();
+        let file_extension = file_name_src.extension().unwrap().to_str().unwrap();
 
-        let filename_optimize_image = format!("{}_{}.{}", file_stem, suffix, file_extension);
-        let filename_thumbnail_optimize_image =
+        let file_name_dest = format!("{}_{}.{}", file_stem, suffix, file_extension);
+        let file_name_thumbnail_dest =
             format!("{}_thumbnail_{}.{}", file_stem, suffix, file_extension);
         [
-            output_path.join(filename_optimize_image),
-            output_path.join(filename_thumbnail_optimize_image),
+            dest_path.join(file_name_dest),
+            dest_path.join(file_name_thumbnail_dest),
         ]
     }
 
     /// The directory for the output is created an a `PathBuf` with the name of the folder is returned.
     fn create_output_dir(
-        filename_original: &Path,
+        file_name_src: &Path,
         source: &String,
         destination_folder: &String,
     ) -> PathBuf {
@@ -38,44 +34,43 @@ impl ResizeImage {
         };
 
         let source_pattern = parent.strip_prefix("./").unwrap();
-        let input_sub_folders = filename_original
+        let input_sub_folders = file_name_src
             .parent()
             .unwrap()
             .strip_prefix(source_pattern)
             .unwrap();
 
-        let output_path = Path::new(destination_folder).join(input_sub_folders);
-        fs::create_dir_all(&output_path).unwrap();
-        output_path
+        let dest_path = Path::new(destination_folder).join(input_sub_folders);
+        fs::create_dir_all(&dest_path).unwrap();
+        dest_path
     }
 
     fn resize_image(
-        filename_original: &PathBuf,
-        filename_optimized_image: &PathBuf,
+        file_name_src: &PathBuf,
+        file_name_optimized_image: &PathBuf,
         nwidth: &u32,
         nquality: &u8,
         webpimage: &bool,
         thumbnail: &bool,
     ) -> Result<(), ImageError> {
-        let original_image =
-            image::open(&filename_original).expect("Opening image original failed");
+        let original_image = image::open(&file_name_src).expect("Opening image original failed");
         let optimized_image = match thumbnail {
             true => ImageOptimizer::new_thumbnail(
                 original_image.to_owned(),
-                filename_optimized_image.to_owned(),
+                file_name_optimized_image.to_owned(),
                 *nwidth,
                 *nquality,
             ),
             false => ImageOptimizer::new(
                 original_image.to_owned(),
-                filename_optimized_image.to_owned(),
+                file_name_optimized_image.to_owned(),
                 *nwidth,
                 *nquality,
             ),
         };
         println!(
             "Converting {:?} (w: {:?}, h: {:?}) to {:?} (w: {:?}, h: {:?})",
-            filename_original,
+            file_name_src,
             original_image.width(),
             original_image.height(),
             optimized_image.nfilename,
@@ -135,14 +130,14 @@ impl ResizeImage {
             println!("{} images are optimized.", entries.len());
         }
         println!("------------------------------------------");
-        for filename_original in entries {
-            let output_path =
-                ResizeImage::create_output_dir(&filename_original, source, destination_folder);
-            let filenames_optimize_image =
-                ResizeImage::create_filenames(&filename_original, &output_path, suffix);
+        for file_name_src in entries {
+            let dest_path =
+                ResizeImage::create_output_dir(&file_name_src, source, destination_folder);
+            let file_names_optimize_image =
+                ResizeImage::create_file_names(&file_name_src, &dest_path, suffix);
             ResizeImage::resize_image(
-                &filename_original,
-                &filenames_optimize_image[0],
+                &file_name_src,
+                &file_names_optimize_image[0],
                 width,
                 quality,
                 webpimage,
@@ -151,8 +146,8 @@ impl ResizeImage {
             .unwrap();
             if thumbnail == &true {
                 ResizeImage::resize_image(
-                    &filename_original,
-                    &filenames_optimize_image[1],
+                    &file_name_src,
+                    &file_names_optimize_image[1],
                     width,
                     quality,
                     webpimage,
@@ -162,7 +157,7 @@ impl ResizeImage {
             }
             println!(
                 "The file '{:?}' has been converted successfully!",
-                &filename_original
+                &file_name_src
             );
             println!("------------------------------------------");
         }
@@ -182,20 +177,20 @@ mod tests {
         false => "unix",
     };
 
-    /// The test checks if the filenames for the optimized image and the thumbnail can be generated.
+    /// The test checks if the file_names for the optimized image and the thumbnail can be generated.
     #[test]
-    fn test_create_filenames() {
+    fn test_create_file_names() {
         let tempdir = tempdir().unwrap().into_path();
-        let mut filename_original = PathBuf::new();
-        filename_original.push("./foo/bar/baz.jpg");
-        let output_path = tempdir.join("./moon/foo/bar/");
-        let temp_filenames =
-            ResizeImage::create_filenames(&filename_original, &output_path, &String::from("sm"));
-        let temp_filenames_ok = [
+        let mut file_name_src = PathBuf::new();
+        file_name_src.push("./foo/bar/baz.jpg");
+        let dest_path = tempdir.join("./moon/foo/bar/");
+        let temp_file_names =
+            ResizeImage::create_file_names(&file_name_src, &dest_path, &String::from("sm"));
+        let temp_file_names_ok = [
             tempdir.join("./moon/foo/bar/baz_sm.jpg"),
             tempdir.join("./moon/foo/bar/baz_thumbnail_sm.jpg"),
         ];
-        assert_eq!(temp_filenames_ok, temp_filenames);
+        assert_eq!(temp_file_names_ok, temp_file_names);
         remove_dir_all(tempdir).unwrap();
     }
 
@@ -203,14 +198,14 @@ mod tests {
     #[test]
     fn test_create_output_dir() {
         let tempdir = tempdir().unwrap().into_path();
-        let mut filename_original = PathBuf::new();
-        filename_original.push("media/foo/bar/baz.jpg");
+        let mut file_name_src = PathBuf::new();
+        file_name_src.push("media/foo/bar/baz.jpg");
         let input_folder = String::from("./media");
         let output_folder = tempdir.join("./moon").to_str().unwrap().to_string();
-        let temp_output_path =
-            ResizeImage::create_output_dir(&filename_original, &input_folder, &output_folder);
-        let temp_output_path_ok = tempdir.join("moon/foo/bar");
-        assert_eq!(temp_output_path_ok, temp_output_path);
+        let temp_dest_path =
+            ResizeImage::create_output_dir(&file_name_src, &input_folder, &output_folder);
+        let temp_dest_path_ok = tempdir.join("moon/foo/bar");
+        assert_eq!(temp_dest_path_ok, temp_dest_path);
         remove_dir_all(tempdir).unwrap();
     }
 
