@@ -4,6 +4,7 @@ mod resize_image;
 
 use clap::Parser;
 use command_parser::Args;
+use resize_image::ResizeImage;
 use std::time::Instant;
 
 /// A tool to optimize images for web. Check out the README on https://github.com/naschidaniel/image-optimizer/blob/main/README.md for more details
@@ -28,7 +29,7 @@ fn main() {
     println!("WebP-Image: {}", webpimage);
     println!("Thumbnail: {}", thumbnail);
 
-    resize_image::run_resize_images(
+    ResizeImage::run_resize_images(
         &args.source,
         &args.destination,
         &args.suffix,
