@@ -29,15 +29,16 @@ fn main() {
     println!("WebP-Image: {}", webpimage);
     println!("Thumbnail: {}", thumbnail);
 
-    ResizeImage::run_resize_images(
-        &args.source,
-        &args.destination,
-        &args.suffix,
-        &args.width,
-        &args.quality,
-        &webpimage,
-        &thumbnail,
+    let new_images = ResizeImage::new(
+        args.source,
+        args.destination,
+        args.suffix,
+        args.width,
+        args.quality,
+        webpimage,
+        thumbnail,
     );
+    new_images.run_resize_images();
     let end_time = start_time.elapsed();
     println!("Duration {} in Seconds", end_time.as_secs());
 }

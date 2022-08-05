@@ -1,43 +1,39 @@
 use crate::image_optimizer::ImageOptimizer;
 use glob::{glob_with, MatchOptions};
-use image::ImageError;
+
 use std::fs;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
-pub struct ResizeImage {
+pub struct ConvertImage {
     pub dest_file: PathBuf,
     pub dest_parent: PathBuf,
     pub dest_thumbnail: PathBuf,
     pub file_name_src: String,
-    pub file_name_thumbnail_webp: String,
     pub file_name_thumbnail: String,
-    pub file_name_webp: String,
+    pub file_name_thumbnail_webp: String,
     pub file_name: String,
+    pub file_name_webp: String,
     pub file_type: String,
     pub suffix: String,
+    pub src_file: PathBuf,
 }
 
-impl ResizeImage {
+impl ConvertImage {
     /// The necessary file structure is created and the modified file name is returned as `PathBuf`.
     fn new(
         file_name_src: &PathBuf,
         source_path: &PathBuf,
         destination: &PathBuf,
         suffix: &String,
-    ) -> ResizeImage {
+    ) -> ConvertImage {
         let source_parent_path = match source_path.is_file() {
             true => fs::canonicalize(file_name_src.parent().unwrap()).unwrap(),
             false => fs::canonicalize(&source_path).unwrap(),
         };
 
-        let rudi = fs::canonicalize(file_name_src).unwrap();
-        println!("source:             {:?}", source_path);
-        println!("source_parent_path: {:?}", source_parent_path);
-        println!("destination:        {:?}", destination);
-        println!("file_name_src:      {:?}", rudi);
-        println!("-------");
-        let source_path_sub_folders = rudi
+        let file_name_src_absolute = fs::canonicalize(file_name_src).unwrap();
+        let source_path_sub_folders = file_name_src_absolute
             .parent()
             .unwrap()
             .strip_prefix(source_parent_path)
@@ -52,51 +48,40 @@ impl ResizeImage {
         let file_name = format!("{}_{}.{}", &file_stem, suffix, file_extension);
         let file_name_thumbnail = format!("{}_thumbnail_{}.{}", &file_stem, suffix, file_extension);
 
-        ResizeImage {
+        Self {
             dest_file: dest_path.join(&file_name),
             dest_parent: dest_path.to_owned(),
             dest_thumbnail: dest_path.join(file_name_thumbnail),
             file_name,
-            file_name_src: file_name_src
-                .file_name()
-                .unwrap()
-                .to_str()
-                .unwrap()
-                .to_string(),
+            file_name_src: format!("{}.{}", file_stem, file_extension),
             file_name_thumbnail: format!("{}_thumbnail_{}.{}", file_stem, suffix, file_extension),
             file_name_thumbnail_webp: format!("{}_thumbnail_{}.webp", file_stem, suffix),
-            file_name_webp: format!("{}_{}.{}", file_stem, suffix, file_extension),
+            file_name_webp: format!("{}_{}.webp", file_stem, suffix),
             file_type: file_extension.to_lowercase(),
             suffix: suffix.to_string(),
+            src_file: file_name_src_absolute,
         }
     }
 
-    fn resize_image(
-        file_name_src: &PathBuf,
-        file_name_optimized_image: &PathBuf,
-        nwidth: &u32,
-        nquality: &u8,
-        webpimage: &bool,
-        thumbnail: &bool,
-    ) -> Result<(), ImageError> {
-        let original_image = image::open(&file_name_src).expect("Opening image original failed");
+    pub fn resize_one(&self, nwidth: &u32, nquality: &u8, webpimage: &bool, thumbnail: &bool) {
+        let original_image = image::open(&self.src_file).expect("Opening image original failed");
         let optimized_image = match thumbnail {
             true => ImageOptimizer::new_thumbnail(
                 original_image.to_owned(),
-                file_name_optimized_image.to_owned(),
+                self.dest_thumbnail.to_owned(),
                 *nwidth,
                 *nquality,
             ),
             false => ImageOptimizer::new(
                 original_image.to_owned(),
-                file_name_optimized_image.to_owned(),
+                self.dest_file.to_owned(),
                 *nwidth,
                 *nquality,
             ),
         };
         println!(
             "Converting {:?} (w: {:?}, h: {:?}) to {:?} (w: {:?}, h: {:?})",
-            file_name_src,
+            self.file_name_src,
             original_image.width(),
             original_image.height(),
             optimized_image.nfilename,
@@ -111,36 +96,63 @@ impl ResizeImage {
         if optimized_image.extension().to_lowercase() == "jpg"
             || optimized_image.extension().to_lowercase() == "jpeg"
         {
-            optimized_image.save_jpg_image()
+            optimized_image.save_jpg_image().unwrap();
         } else {
-            optimized_image.save_png_image()
+            optimized_image.save_png_image().unwrap();
         }
     }
+}
 
-    pub fn run_resize_images(
-        source: &String,
-        destination: &String,
-        suffix: &String,
-        width: &u32,
-        quality: &u8,
-        webpimage: &bool,
-        thumbnail: &bool,
-    ) {
+pub struct ResizeImage {
+    pub source: String,
+    pub source_path: PathBuf,
+    pub destination: String,
+    pub destination_path: PathBuf,
+    pub suffix: String,
+    pub width: u32,
+    pub quality: u8,
+    pub webpimage: bool,
+    pub thumbnail: bool,
+}
+
+impl ResizeImage {
+    pub fn new(
+        source: String,
+        destination: String,
+        suffix: String,
+        width: u32,
+        quality: u8,
+        webpimage: bool,
+        thumbnail: bool,
+    ) -> ResizeImage {
+        Self {
+            source_path: fs::canonicalize(&source).unwrap(),
+            source,
+            destination_path: fs::canonicalize(&destination).unwrap(),
+            destination,
+            suffix,
+            width,
+            quality,
+            webpimage,
+            thumbnail,
+        }
+    }
+    pub fn run_resize_images(&self) {
         let options = MatchOptions {
             case_sensitive: false,
             require_literal_separator: false,
             require_literal_leading_dot: false,
         };
 
-        let entries = match Path::new(source).is_file() {
-            true => glob_with(source, options)
+        let entries = match Path::new(&self.source).is_file() {
+            true => glob_with(&self.source, options)
                 .unwrap()
                 .flatten()
                 .collect::<Vec<PathBuf>>(),
             false => {
-                let pattern_jpg = format!("{}/**/*.jpg", source);
-                let pattern_jpeg = format!("{}/**/*.jpeg", source);
-                let pattern_png = format!("{}/**/*.png", source);
+                let pattern_jpg = format!("{}/**/*.jpg", &self.source);
+                let pattern_jpeg = format!("{}/**/*.jpeg", &self.source);
+                let pattern_png = format!("{}/**/*.png", &self.source);
                 glob_with(&pattern_jpg, options)
                     .unwrap()
                     .chain(glob_with(&pattern_jpeg, options).unwrap())
@@ -150,41 +162,21 @@ impl ResizeImage {
             }
         };
         println!("------------------------------------------");
-        if entries.len() == 1 {
-            println!("{} image will be optimized.", entries.len());
-        } else {
-            println!("{} images are optimized.", entries.len());
-        }
+        println!("{} images will be optimized.", entries.len());
         println!("------------------------------------------");
-        let source_path = fs::canonicalize(&source).unwrap();
-        let destioname_path = fs::canonicalize(&destination).unwrap();
+
         for file_name_src in entries {
-            let image = ResizeImage::new(&file_name_src, &source_path, &destioname_path, suffix);
-            println!("{:?}", image);
-            ResizeImage::resize_image(
+            let image = ConvertImage::new(
                 &file_name_src,
-                &image.dest_file,
-                width,
-                quality,
-                webpimage,
-                &false,
-            )
-            .unwrap();
-            if thumbnail == &true {
-                ResizeImage::resize_image(
-                    &file_name_src,
-                    &image.dest_thumbnail,
-                    width,
-                    quality,
-                    webpimage,
-                    thumbnail,
-                )
-                .unwrap();
-            }
-            println!(
-                "The file '{:?}' has been converted successfully!",
-                &file_name_src
+                &self.source_path,
+                &self.destination_path,
+                &self.suffix,
             );
+            image.resize_one(&self.width, &self.quality, &self.webpimage, &false);
+            if self.thumbnail {
+                image.resize_one(&self.width, &self.quality, &self.webpimage, &self.thumbnail);
+            }
+            println!("The file '{:?}' has been converted!", file_name_src);
             println!("------------------------------------------");
         }
     }
@@ -203,38 +195,48 @@ mod tests {
         false => "unix",
     };
 
-    /// The test checks if the file_names for the optimized image and the thumbnail can be generated.
+    /// The test checks if the metadata can be generated.
     #[test]
     fn test_new() {
         let tempdir = tempdir().unwrap().into_path();
-        let file_name_src = tempdir.join("spool/foo/bar/baz.jpg");
+        let file_name_src = tempdir.join("spool/foo/bar/baz.JPG");
         fs::create_dir_all(&file_name_src.parent().unwrap()).unwrap();
         fs::copy("media/paradise/fly.JPG", &file_name_src).unwrap();
         let source = tempdir.join("spool");
         let destination = tempdir.join("moon");
-        let image = ResizeImage::new(&file_name_src, &source, &destination, &String::from("sm"));
-        assert_eq!(tempdir.join("moon/foo/bar/baz_sm.jpg"), image.dest_file);
+        let image = ConvertImage::new(&file_name_src, &source, &destination, &String::from("sm"));
+        assert_eq!(tempdir.join("moon/foo/bar/baz_sm.JPG"), image.dest_file);
+        assert_eq!(tempdir.join("moon/foo/bar"), image.dest_parent);
         assert_eq!(
-            tempdir.join("moon/foo/bar/baz_thumbnail_sm.jpg"),
+            tempdir.join("moon/foo/bar/baz_thumbnail_sm.JPG"),
             image.dest_thumbnail
         );
+        assert_eq!("baz.JPG", image.file_name_src);
+        assert_eq!("baz_sm.JPG", image.file_name);
+        assert_eq!("baz_sm.webp", image.file_name_webp);
+        assert_eq!("baz_thumbnail_sm.JPG", image.file_name_thumbnail);
+        assert_eq!("baz_thumbnail_sm.webp", image.file_name_thumbnail_webp);
+        assert_eq!("jpg", image.file_type);
+        assert_eq!("sm", image.suffix);
+        assert_eq!(tempdir.join("spool/foo/bar/baz.JPG"), image.src_file);
+        remove_dir_all(tempdir).unwrap();
     }
 
-    /// The test checks whether the original images in a folder can be optimized.
+    /// The test checks if multiple files in multiple sub folders can be optimized.
     #[test]
     fn test_resize_images_in_folder() {
         let tempdir = String::from(tempdir().unwrap().into_path().to_str().unwrap());
 
-        // optimize images
-        ResizeImage::run_resize_images(
-            &String::from("media"),
-            &tempdir,
-            &String::from("sm"),
-            &500,
-            &90,
-            &true,
-            &true,
-        );
+        ResizeImage::new(
+            String::from("media"),
+            tempdir.clone(),
+            String::from("sm"),
+            500,
+            90,
+            true,
+            true,
+        )
+        .run_resize_images();
 
         let mut temp_img_jpg_path = tempdir.to_owned();
         temp_img_jpg_path.push_str("/paradise/fly_sm.JPG");
@@ -284,21 +286,21 @@ mod tests {
         remove_dir_all(tempdir).unwrap();
     }
 
-    /// The test checks if on original image can be optimized.
+    /// The test checks if one file can be optimized.
     #[test]
-    fn test_resize_one_image() {
+    fn test_resize_one_file() {
         let tempdir = tempdir().unwrap().into_path().to_str().unwrap().to_string();
 
-        // optimize images
-        ResizeImage::run_resize_images(
-            &String::from("media/paradise/fly.JPG"),
-            &tempdir,
-            &String::from("xxs"),
-            &250,
-            &90,
-            &true,
-            &false,
-        );
+        ResizeImage::new(
+            String::from("media/paradise/fly.JPG"),
+            tempdir.clone(),
+            String::from("xxs"),
+            250,
+            90,
+            true,
+            false,
+        )
+        .run_resize_images();
 
         let mut temp_img_jpg_webp_path = tempdir.to_owned();
         temp_img_jpg_webp_path.push_str("/fly_xxs.webp");
