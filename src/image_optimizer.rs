@@ -57,9 +57,9 @@ impl ImageOptimizer {
     }
     pub fn save_jpg_image(&self) -> Result<(), ImageError> {
         let file = File::create(&self.nfilename).unwrap();
-        let ref mut buffer = BufWriter::new(file);
+        let buffer = &mut BufWriter::new(file);
         JpegEncoder::new_with_quality(buffer, self.nquality).encode(
-            &self.nimage.as_bytes().to_vec(),
+            self.nimage.as_bytes(),
             self.nwidth,
             self.nheight,
             self.nimage.color(),
@@ -67,20 +67,20 @@ impl ImageOptimizer {
     }
     pub fn save_png_image(&self) -> Result<(), ImageError> {
         let file = File::create(&self.nfilename).unwrap();
-        let ref mut buffer = BufWriter::new(file);
+        let buffer = &mut BufWriter::new(file);
         PngEncoder::new_with_quality(
             buffer,
             png::CompressionType::Default,
             png::FilterType::NoFilter,
         )
         .write_image(
-            &self.nimage.as_bytes().to_vec(),
+            self.nimage.as_bytes(),
             self.nwidth,
             self.nheight,
             self.nimage.color(),
         )
     }
-    pub fn save_webp_image(&self) -> () {
+    pub fn save_webp_image(&self) {
         let file = &self
             .nfilename
             .to_str()
@@ -94,7 +94,7 @@ impl ImageOptimizer {
         );
         let mut buffer = File::create(filename).unwrap();
         let webp_image = Encoder::new(
-            &self.nimage.as_bytes().to_vec(),
+            self.nimage.as_bytes(),
             PixelLayout::Rgb,
             self.nwidth,
             self.nheight,

@@ -66,13 +66,13 @@ fn resize_image(
         true => image_optimizer::ImageOptimizer::new_thumbnail(
             original_image.to_owned(),
             filename_optimized_image.to_owned(),
-            nwidth.clone(),
+            *nwidth,
             *nquality,
         ),
         false => image_optimizer::ImageOptimizer::new(
             original_image.to_owned(),
             filename_optimized_image.to_owned(),
-            nwidth.clone(),
+            *nwidth,
             *nquality,
         ),
     };
@@ -144,8 +144,8 @@ fn run_resize_images(
         resize_image(
             &filename_original,
             &filenames_optimize_image[0],
-            &width,
-            &quality,
+            width,
+            quality,
             webpimage,
             &false,
         )
@@ -154,8 +154,8 @@ fn run_resize_images(
             resize_image(
                 &filename_original,
                 &filenames_optimize_image[1],
-                &width,
-                &quality,
+                width,
+                quality,
                 webpimage,
                 thumbnail,
             )
@@ -224,8 +224,8 @@ mod tests {
         let temp_filenames =
             create_filenames(&filename_original, &output_path, &String::from("sm"));
         let temp_filenames_ok = [
-            tempdir.clone().join("./moon/foo/bar/baz_sm.jpg"),
-            tempdir.clone().join("./moon/foo/bar/baz_thumbnail_sm.jpg"),
+            tempdir.join("./moon/foo/bar/baz_sm.jpg"),
+            tempdir.join("./moon/foo/bar/baz_thumbnail_sm.jpg"),
         ];
         assert_eq!(temp_filenames_ok, temp_filenames);
         remove_dir_all(tempdir).unwrap();
@@ -240,7 +240,7 @@ mod tests {
         let input_folder = String::from("./media");
         let output_folder = tempdir.join("./moon").to_str().unwrap().to_string();
         let temp_output_path = create_output_dir(&filename_original, &input_folder, &output_folder);
-        let temp_output_path_ok = tempdir.clone().join("moon/foo/bar");
+        let temp_output_path_ok = tempdir.join("moon/foo/bar");
         assert_eq!(temp_output_path_ok, temp_output_path);
         remove_dir_all(tempdir).unwrap();
     }
