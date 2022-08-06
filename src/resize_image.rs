@@ -218,7 +218,10 @@ mod tests {
         assert_eq!("baz_thumbnail_sm.webp", image.file_name_thumbnail_webp);
         assert_eq!("jpg", image.file_type);
         assert_eq!("sm", image.suffix);
-        assert_eq!(tempdir.join("spool/foo/bar/baz.JPG"), image.src_file);
+        assert_eq!(
+            tempdir.join(Path::new("spool/foo/bar/baz.JPG")),
+            image.src_file
+        );
         remove_dir_all(tempdir).unwrap();
     }
 
