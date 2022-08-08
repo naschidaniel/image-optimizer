@@ -219,7 +219,10 @@ mod tests {
         assert_eq!("jpg", image.file_type);
         assert_eq!("sm", image.suffix);
         assert_eq!(
-            tempdir.join(Path::new("spool/foo/bar/baz.JPG")),
+            tempdir
+                .join("spool/foo/bar/baz.JPG")
+                .canonicalize()
+                .unwrap(),
             image.src_file
         );
         remove_dir_all(tempdir).unwrap();
