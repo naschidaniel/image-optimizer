@@ -1,13 +1,18 @@
 use crate::image_optimizer::ImageOptimizer;
-use glob::{glob_with, MatchOptions};
 
+use glob::{glob_with, MatchOptions};
+use serde_derive::Serialize;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-#[derive(Debug)]
+#[derive(Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct ConvertImage {
+    #[serde(skip_serializing)]
     pub dest_file: PathBuf,
+    #[serde(skip_serializing)]
     pub dest_parent: PathBuf,
+    #[serde(skip_serializing)]
     pub dest_thumbnail: PathBuf,
     pub file_name_src: String,
     pub file_name_thumbnail: String,
@@ -15,7 +20,8 @@ pub struct ConvertImage {
     pub file_name: String,
     pub file_name_webp: String,
     pub file_type: String,
-    pub suffix: String,
+    pub width: u32,
+    #[serde(skip_serializing)]
     pub src_file: PathBuf,
 }
 
@@ -25,7 +31,8 @@ impl ConvertImage {
         file_name_src: &PathBuf,
         source_path: &PathBuf,
         destination: &PathBuf,
-        suffix: &String,
+        prefix: &String,
+        width: &u32,
     ) -> ConvertImage {
         let source_parent_path = match source_path.is_file() {
             true => fs::canonicalize(file_name_src.parent().unwrap()).unwrap(),
@@ -45,21 +52,28 @@ impl ConvertImage {
         let file_stem = file_name_src.file_stem().unwrap().to_str().unwrap();
         let file_extension = file_name_src.extension().unwrap().to_str().unwrap();
 
-        let file_name = format!("{}_{}.{}", &file_stem, suffix, file_extension);
-        let file_name_thumbnail = format!("{}_thumbnail_{}.{}", &file_stem, suffix, file_extension);
+        let metadata_prefix = format!("{}{}", prefix, source_path_sub_folders.to_str().unwrap());
+        let file_name = format!("{}_{}.{}", &file_stem, width, file_extension);
+        let file_name_thumbnail = format!("{}_thumbnail_{}.{}", &file_stem, width, file_extension);
 
         Self {
             dest_file: dest_path.join(&file_name),
             dest_parent: dest_path.to_owned(),
             dest_thumbnail: dest_path.join(file_name_thumbnail),
-            file_name,
-            file_name_src: format!("{}.{}", file_stem, file_extension),
-            file_name_thumbnail: format!("{}_thumbnail_{}.{}", file_stem, suffix, file_extension),
-            file_name_thumbnail_webp: format!("{}_thumbnail_{}.webp", file_stem, suffix),
-            file_name_webp: format!("{}_{}.webp", file_stem, suffix),
+            file_name: format!("{}/{}", metadata_prefix, &file_name),
+            file_name_src: format!("{}/{}.{}", metadata_prefix, file_stem, file_extension),
+            file_name_thumbnail: format!(
+                "{}/{}_thumbnail_{}.{}",
+                metadata_prefix, file_stem, width, file_extension
+            ),
+            file_name_thumbnail_webp: format!(
+                "{}/{}_thumbnail_{}.webp",
+                metadata_prefix, file_stem, width
+            ),
+            file_name_webp: format!("{}/{}_{}.webp", metadata_prefix, file_stem, width),
             file_type: file_extension.to_lowercase(),
-            suffix: suffix.to_string(),
             src_file: file_name_src_absolute,
+            width: width.to_owned(),
         }
     }
 
@@ -104,22 +118,23 @@ impl ConvertImage {
 }
 
 pub struct ResizeImage {
-    pub source: String,
-    pub source_path: PathBuf,
-    pub destination: String,
     pub destination_path: PathBuf,
-    pub suffix: String,
-    pub width: u32,
+    pub destination: String,
+    pub json: Vec<String>,
     pub quality: u8,
-    pub webpimage: bool,
+    pub source_path: PathBuf,
+    pub source: String,
+    pub prefix: String,
     pub thumbnail: bool,
+    pub webpimage: bool,
+    pub width: u32,
 }
 
 impl ResizeImage {
     pub fn new(
         source: String,
         destination: String,
-        suffix: String,
+        prefix: String,
         width: u32,
         quality: u8,
         webpimage: bool,
@@ -130,14 +145,15 @@ impl ResizeImage {
             source,
             destination_path: fs::canonicalize(&destination).unwrap(),
             destination,
-            suffix,
             width,
+            prefix,
             quality,
             webpimage,
             thumbnail,
+            json: Vec::new(),
         }
     }
-    pub fn run_resize_images(&self) {
+    pub fn run_resize_images(&mut self) {
         let options = MatchOptions {
             case_sensitive: false,
             require_literal_separator: false,
@@ -170,7 +186,8 @@ impl ResizeImage {
                 &file_name_src,
                 &self.source_path,
                 &self.destination_path,
-                &self.suffix,
+                &self.prefix,
+                &self.width,
             );
             image.resize_one(&self.width, &self.quality, &self.webpimage, &false);
             if self.thumbnail {
@@ -178,7 +195,12 @@ impl ResizeImage {
             }
             println!("The file '{:?}' has been converted!", file_name_src);
             println!("------------------------------------------");
+            let data = serde_json::to_string_pretty(&image).unwrap();
+            self.json.push(data);
         }
+    }
+    pub fn get_metadata_json(&self) -> String {
+        self.json.join(", ")
     }
 }
 
@@ -186,7 +208,6 @@ impl ResizeImage {
 mod tests {
     use super::*;
     use std::fs::remove_dir_all;
-
     use tempfile::tempdir;
 
     // Determine operating system
@@ -204,20 +225,22 @@ mod tests {
         fs::copy("media/paradise/fly.JPG", &file_name_src).unwrap();
         let source = tempdir.join("spool");
         let destination = tempdir.join("moon");
-        let image = ConvertImage::new(&file_name_src, &source, &destination, &String::from("sm"));
-        assert_eq!(tempdir.join("moon/foo/bar/baz_sm.JPG"), image.dest_file);
+        let image = ConvertImage::new(
+            &file_name_src,
+            &source,
+            &destination,
+            &String::from("/www/moon/"),
+            &500,
+        );
+        assert_eq!(tempdir.join("moon/foo/bar/baz_500.JPG"), image.dest_file);
         assert_eq!(tempdir.join("moon/foo/bar"), image.dest_parent);
         assert_eq!(
-            tempdir.join("moon/foo/bar/baz_thumbnail_sm.JPG"),
+            tempdir.join("moon/foo/bar/baz_thumbnail_500.JPG"),
             image.dest_thumbnail
         );
-        assert_eq!("baz.JPG", image.file_name_src);
-        assert_eq!("baz_sm.JPG", image.file_name);
-        assert_eq!("baz_sm.webp", image.file_name_webp);
-        assert_eq!("baz_thumbnail_sm.JPG", image.file_name_thumbnail);
-        assert_eq!("baz_thumbnail_sm.webp", image.file_name_thumbnail_webp);
-        assert_eq!("jpg", image.file_type);
-        assert_eq!("sm", image.suffix);
+        assert_eq!("/www/moon/foo/bar/baz.JPG", image.file_name_src);
+        assert_eq!("/www/moon/foo/bar/baz_500.JPG", image.file_name);
+        assert_eq!("/www/moon/foo/bar/baz_500.webp", image.file_name_webp);
         assert_eq!(
             tempdir
                 .join("spool/foo/bar/baz.JPG")
@@ -225,6 +248,12 @@ mod tests {
                 .unwrap(),
             image.src_file
         );
+        assert_eq!(
+            "/www/moon/foo/bar/baz_thumbnail_500.webp",
+            image.file_name_thumbnail_webp
+        );
+        assert_eq!("jpg", image.file_type);
+        assert_eq!(tempdir.join("spool/foo/bar/baz.JPG"), image.src_file);
         remove_dir_all(tempdir).unwrap();
     }
 
@@ -236,7 +265,7 @@ mod tests {
         ResizeImage::new(
             String::from("media"),
             tempdir.clone(),
-            String::from("sm"),
+            String::from("/www/moon/"),
             500,
             90,
             true,
@@ -245,32 +274,32 @@ mod tests {
         .run_resize_images();
 
         let mut temp_img_jpg_path = tempdir.to_owned();
-        temp_img_jpg_path.push_str("/paradise/fly_sm.JPG");
+        temp_img_jpg_path.push_str("/paradise/fly_500.JPG");
         let mut temp_img_jpg_webp_path = tempdir.to_owned();
-        temp_img_jpg_webp_path.push_str("/paradise/fly_sm.webp");
+        temp_img_jpg_webp_path.push_str("/paradise/fly_500.webp");
         let mut temp_img_png_webp_path = tempdir.to_owned();
-        temp_img_png_webp_path.push_str("/paradise/paragliding_sm.webp");
+        temp_img_png_webp_path.push_str("/paradise/paragliding_500.webp");
 
         let temp_img_jpg = image::open(temp_img_jpg_path).unwrap();
         let temp_img_jpg_webp = image::open(temp_img_jpg_webp_path).unwrap();
         let temp_img_png_webp = image::open(temp_img_png_webp_path).unwrap();
 
         let mut temp_img_jpg_thumbnail_path = tempdir.to_owned();
-        temp_img_jpg_thumbnail_path.push_str("/paradise/fly_thumbnail_sm.JPG");
+        temp_img_jpg_thumbnail_path.push_str("/paradise/fly_thumbnail_500.JPG");
         let mut temp_img_jpg_webp_thumbnail_path = tempdir.to_owned();
-        temp_img_jpg_webp_thumbnail_path.push_str("/paradise/fly_thumbnail_sm.webp");
+        temp_img_jpg_webp_thumbnail_path.push_str("/paradise/fly_thumbnail_500.webp");
         let mut temp_img_png_webp_thumbnail_path = tempdir.to_owned();
-        temp_img_png_webp_thumbnail_path.push_str("/paradise/paragliding_thumbnail_sm.webp");
+        temp_img_png_webp_thumbnail_path.push_str("/paradise/paragliding_thumbnail_500.webp");
 
         let temp_img_jpg_thumbnail = image::open(temp_img_jpg_thumbnail_path).unwrap();
         let temp_img_jpg_webp_thumbnail = image::open(temp_img_jpg_webp_thumbnail_path).unwrap();
         let temp_img_png_webp_thumbnail = image::open(temp_img_png_webp_thumbnail_path).unwrap();
 
         // valid testdata
-        let img_jpg_ok = image::open(format!("./testdata/fly_sm.{PLATFORM}.JPG")).unwrap();
-        let img_jpg_webp_ok = image::open(format!("./testdata/fly_sm.{PLATFORM}.webp")).unwrap();
+        let img_jpg_ok = image::open(format!("./testdata/fly_500.{PLATFORM}.JPG")).unwrap();
+        let img_jpg_webp_ok = image::open(format!("./testdata/fly_500.{PLATFORM}.webp")).unwrap();
         let img_png_webp_ok =
-            image::open(format!("./testdata/paragliding_sm.{PLATFORM}.webp")).unwrap();
+            image::open(format!("./testdata/paragliding_500.{PLATFORM}.webp")).unwrap();
 
         assert_eq!(img_jpg_ok, temp_img_jpg);
         assert_eq!(img_jpg_webp_ok, temp_img_jpg_webp);
@@ -278,11 +307,11 @@ mod tests {
 
         // valid testdata thumbnails
         let img_jpg_thumbnail_ok =
-            image::open(format!("./testdata/fly_thumbnail_sm.{PLATFORM}.JPG")).unwrap();
+            image::open(format!("./testdata/fly_thumbnail_500.{PLATFORM}.JPG")).unwrap();
         let img_jpg_webp_thumbnail_ok =
-            image::open(format!("./testdata/fly_thumbnail_sm.{PLATFORM}.webp")).unwrap();
+            image::open(format!("./testdata/fly_thumbnail_500.{PLATFORM}.webp")).unwrap();
         let img_png_webp_thumbnail_ok = image::open(format!(
-            "./testdata/paragliding_thumbnail_sm.{PLATFORM}.webp"
+            "./testdata/paragliding_thumbnail_500.{PLATFORM}.webp"
         ))
         .unwrap();
 
@@ -300,7 +329,7 @@ mod tests {
         ResizeImage::new(
             String::from("media/paradise/fly.JPG"),
             tempdir.clone(),
-            String::from("xxs"),
+            String::from("/www/moon/"),
             250,
             90,
             true,
@@ -309,11 +338,11 @@ mod tests {
         .run_resize_images();
 
         let mut temp_img_jpg_webp_path = tempdir.to_owned();
-        temp_img_jpg_webp_path.push_str("/fly_xxs.webp");
+        temp_img_jpg_webp_path.push_str("/fly_250.webp");
 
         let temp_img_jpg_webp = image::open(temp_img_jpg_webp_path).unwrap();
 
-        let img_jpg_webp_ok = image::open(format!("./testdata/fly_xxs.{PLATFORM}.webp")).unwrap();
+        let img_jpg_webp_ok = image::open(format!("./testdata/fly_250.{PLATFORM}.webp")).unwrap();
 
         assert_eq!(img_jpg_webp_ok, temp_img_jpg_webp);
 
