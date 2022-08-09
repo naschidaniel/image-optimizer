@@ -44,15 +44,18 @@ impl ConvertImage {
             .parent()
             .unwrap()
             .strip_prefix(source_parent_path)
-            .unwrap();
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .replace('\\', "/");
 
-        let dest_path = Path::new(destination).join(source_path_sub_folders);
+        let dest_path = Path::new(destination).join(&source_path_sub_folders);
         fs::create_dir_all(&dest_path).unwrap();
 
         let file_stem = file_name_src.file_stem().unwrap().to_str().unwrap();
         let file_extension = file_name_src.extension().unwrap().to_str().unwrap();
 
-        let metadata_prefix = format!("{}{}", prefix, source_path_sub_folders.to_str().unwrap());
+        let metadata_prefix = format!("{}{}", prefix, source_path_sub_folders.as_str());
         let file_name = format!("{}_{}.{}", &file_stem, width, file_extension);
         let file_name_thumbnail = format!("{}_thumbnail_{}.{}", &file_stem, width, file_extension);
 
@@ -60,17 +63,29 @@ impl ConvertImage {
             dest_file: dest_path.join(&file_name),
             dest_parent: dest_path.to_owned(),
             dest_thumbnail: dest_path.join(file_name_thumbnail),
-            file_name: format!("{}/{}", metadata_prefix, &file_name),
-            file_name_src: format!("{}/{}.{}", metadata_prefix, file_stem, file_extension),
+            file_name: format!("{}/{}", metadata_prefix, &file_name).replace("//", "/"),
+            file_name_src: format!(
+                "{}/{}",
+                metadata_prefix,
+                file_name_src_absolute
+                    .file_name()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+            )
+            .replace("//", "/"),
             file_name_thumbnail: format!(
                 "{}/{}_thumbnail_{}.{}",
                 metadata_prefix, file_stem, width, file_extension
-            ),
+            )
+            .replace("//", "/"),
             file_name_thumbnail_webp: format!(
                 "{}/{}_thumbnail_{}.webp",
                 metadata_prefix, file_stem, width
-            ),
-            file_name_webp: format!("{}/{}_{}.webp", metadata_prefix, file_stem, width),
+            )
+            .replace("//", "/"),
+            file_name_webp: format!("{}/{}_{}.webp", metadata_prefix, file_stem, width)
+                .replace("//", "/"),
             file_type: file_extension.to_lowercase(),
             src_file: file_name_src_absolute,
             width: width.to_owned(),
@@ -253,7 +268,6 @@ mod tests {
             image.file_name_thumbnail_webp
         );
         assert_eq!("jpg", image.file_type);
-        assert_eq!(tempdir.join("spool/foo/bar/baz.JPG"), image.src_file);
         remove_dir_all(tempdir).unwrap();
     }
 
@@ -326,7 +340,7 @@ mod tests {
     fn test_resize_one_file() {
         let tempdir = tempdir().unwrap().into_path().to_str().unwrap().to_string();
 
-        ResizeImage::new(
+        let mut new_images = ResizeImage::new(
             String::from("media/paradise/fly.JPG"),
             tempdir.clone(),
             String::from("/www/moon/"),
@@ -334,8 +348,24 @@ mod tests {
             90,
             true,
             false,
-        )
-        .run_resize_images();
+        );
+
+        new_images.run_resize_images();
+        let json_data = new_images.get_metadata_json();
+        println!("{}", json_data);
+
+        let rudi = String::from(
+            "{
+  \"fileNameSrc\": \"/www/moon/fly.JPG\",
+  \"fileNameThumbnail\": \"/www/moon/fly_thumbnail_250.JPG\",
+  \"fileNameThumbnailWebp\": \"/www/moon/fly_thumbnail_250.webp\",
+  \"fileName\": \"/www/moon/fly_250.JPG\",
+  \"fileNameWebp\": \"/www/moon/fly_250.webp\",
+  \"fileType\": \"jpg\",
+  \"width\": 250
+}",
+        );
+        assert_eq!(rudi, json_data);
 
         let mut temp_img_jpg_webp_path = tempdir.to_owned();
         temp_img_jpg_webp_path.push_str("/fly_250.webp");
