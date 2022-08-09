@@ -1,4 +1,4 @@
-[![release v0.4.0](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml/badge.svg?branch=v0.4.0)](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml)
+[![release v0.5.0](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml/badge.svg?branch=v0.5.0)](https://github.com/naschidaniel/image-optimizer/actions/workflows/release.yml)
 [![rsaudit](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsaudit.yml/badge.svg?branch=main)](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsaudit.yml)
 [![rsbuild](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsbuild.yml/badge.svg?branch=main)](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsbuild.yml)
 [![rsformat](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsformat.yml/badge.svg?branch=main)](https://github.com/naschidaniel/image-optimizer/actions/workflows/rsformat.yml)
@@ -34,18 +34,18 @@ image-optimizer.exe --version
 ./image-optimizer --help
 ```
 
-The following command line arguments are required: {source} {destination} {widths} {qualities} {webpimage} {thumbnail} {prefix} {jsonfile}.
+The following command line arguments are required: {source} {destination} {widths} {qualities} {prefix} {jsonfile}.
 
 ```
 # Optimize images in a folder, save a copy of the image in WebP format and create a thumbnails of the images
-./image-optimizer --source ./media --destination ./testdata --widths 250 500 --qualities 90 80 --webpimage true --thumbnail true --prefix /www/moon/ --jsonfile metadata.json
+./image-optimizer --source ./media --destination ./testdata --widths 250 500 --qualities 90 80 --prefix /www/moon/ --jsonfile metadata.json
 ```
 
 The command will optimize all `*.jpg` and `*.png` files in the `./media` folder. In the folder `./testdata`, the optimized images will be created with a widths of `250 px` and `500 px` with the qualities of `90` and `80` percent in JPEG, PNG and [WebP](https://developers.google.com/speed/webp) Format. A square image including the postfix `thumbnail` with a widths and height of `250px` and `500px` will be generated. This image can be used as a preview for an image gallery.
 The file `./testdata/metadata.json` is created in addition to the images. The JSON file contains the metadata of the optimized images. The prefix `/www/moon/` is added to the filenames in the `./testdata/metadata.json`.
 ```
 # Optimize one images, save a copy of the image in WebP format and create a thumbnails of the image
-./image-optimizer --source ./media/paradise/fly.JPG --destination ./testdata --widths 250 --qualities 90 --webpimage true --thumbnail true
+./image-optimizer --source ./media/paradise/fly.JPG --destination ./testdata --widths 250 --qualities 90
 ```
 
 The command optimizes the image and creates a thumbnail and a copy in WebP format.
@@ -88,7 +88,7 @@ The command optimizes the image and creates a thumbnail and a copy in WebP forma
 ```
 cargo test
 # or
-cargo run -- --destination ./testdata --source ./media --thumbnail true --webpimage true --prefix /www/moon/ --qualities 90 80 --widths 250 500  --jsonfile metadata.json```
+cargo run -- --destination ./testdata --source ./media --prefix /www/moon/ --qualities 90 80 --widths 250 500  --jsonfile metadata.json```
 ```
 
 ## Build
@@ -104,7 +104,8 @@ An example of automatic image optimisiation for continuous integration and produ
 
 ## Changelog
 
-* 2022-07-09 Version 0.4.0 - Dump Metadata of images to a jsonfile. 
+* 2022-08-09 Version 0.5.0 - Webpimages and thumbnails are created automatically. 
+* 2022-08-09 Version 0.4.0 - Dump Metadata of images to a jsonfile. 
 * 2022-07-09 Version 0.3.6 - Refact command line parser Clap. 
 * 2021-10-28 Version 0.3.1 - Single images can now also be converted. 
 * 2021-09-17 Version 0.3.0 - Clap is used to parse command line arguments.

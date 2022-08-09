@@ -16,8 +16,6 @@ fn main() {
 
     // Command line arguments
     let args = Args::parse();
-    let webpimage = args.webpimage.parse::<bool>().unwrap();
-    let thumbnail = args.thumbnail.parse::<bool>().unwrap();
 
     println!(
         "Running image-optimizer version {}",
@@ -27,8 +25,6 @@ fn main() {
     println!("Destination folder: {}", &args.destination);
     println!("Widths: {:?}", &args.widths);
     println!("Qualities: {:?}", &args.qualities);
-    println!("WebP-Image: {}", webpimage);
-    println!("Thumbnail: {}", thumbnail);
     if !args.jsonfile.is_empty() {
         println!("JSON File: {}/{}", &args.destination, &args.jsonfile);
     }
@@ -41,8 +37,6 @@ fn main() {
             args.prefix.to_owned(),
             width.to_owned(),
             args.qualities[index].to_owned(),
-            webpimage,
-            thumbnail,
         );
         new_images.run_resize_images();
         json_data.push(new_images.get_metadata_json());

@@ -92,9 +92,9 @@ impl ConvertImage {
         }
     }
 
-    pub fn resize_one(&self, nwidth: &u32, nquality: &u8, webpimage: &bool, thumbnail: &bool) {
+    pub fn resize_one(&self, nwidth: &u32, nquality: &u8, is_thumbnail: &bool) {
         let original_image = image::open(&self.src_file).expect("Opening image original failed");
-        let optimized_image = match thumbnail {
+        let optimized_image = match is_thumbnail {
             true => ImageOptimizer::new_thumbnail(
                 original_image.to_owned(),
                 self.dest_thumbnail.to_owned(),
@@ -118,9 +118,7 @@ impl ConvertImage {
             optimized_image.nheight,
         );
 
-        if webpimage == &true {
-            optimized_image.save_webp_image();
-        }
+        optimized_image.save_webp_image();
 
         if optimized_image.extension().to_lowercase() == "jpg"
             || optimized_image.extension().to_lowercase() == "jpeg"
@@ -140,8 +138,6 @@ pub struct ResizeImage {
     pub source_path: PathBuf,
     pub source: String,
     pub prefix: String,
-    pub thumbnail: bool,
-    pub webpimage: bool,
     pub width: u32,
 }
 
@@ -152,8 +148,6 @@ impl ResizeImage {
         prefix: String,
         width: u32,
         quality: u8,
-        webpimage: bool,
-        thumbnail: bool,
     ) -> ResizeImage {
         Self {
             source_path: fs::canonicalize(&source).unwrap(),
@@ -163,8 +157,6 @@ impl ResizeImage {
             width,
             prefix,
             quality,
-            webpimage,
-            thumbnail,
             json: Vec::new(),
         }
     }
@@ -204,10 +196,9 @@ impl ResizeImage {
                 &self.prefix,
                 &self.width,
             );
-            image.resize_one(&self.width, &self.quality, &self.webpimage, &false);
-            if self.thumbnail {
-                image.resize_one(&self.width, &self.quality, &self.webpimage, &self.thumbnail);
-            }
+            // create a Thumbnail
+            image.resize_one(&self.width, &self.quality, &true);
+            image.resize_one(&self.width, &self.quality, &false);
             println!("The file '{:?}' has been converted!", file_name_src);
             println!("------------------------------------------");
             let data = serde_json::to_string_pretty(&image).unwrap();
@@ -282,8 +273,6 @@ mod tests {
             String::from("/www/moon/"),
             500,
             90,
-            true,
-            true,
         )
         .run_resize_images();
 
@@ -346,8 +335,6 @@ mod tests {
             String::from("/www/moon/"),
             250,
             90,
-            true,
-            false,
         );
 
         new_images.run_resize_images();
