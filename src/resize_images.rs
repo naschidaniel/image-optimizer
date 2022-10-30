@@ -130,7 +130,7 @@ impl ConvertImage {
     }
 }
 
-pub struct ResizeImage {
+pub struct ResizeImages {
     pub destination_path: PathBuf,
     pub destination: String,
     pub json: Vec<String>,
@@ -141,14 +141,14 @@ pub struct ResizeImage {
     pub width: u32,
 }
 
-impl ResizeImage {
+impl ResizeImages {
     pub fn new(
         source: String,
         destination: String,
         prefix: String,
         width: u32,
         quality: u8,
-    ) -> ResizeImage {
+    ) -> ResizeImages {
         Self {
             source_path: fs::canonicalize(&source).unwrap(),
             source,
@@ -267,7 +267,7 @@ mod tests {
     fn test_resize_images_in_folder() {
         let tempdir = String::from(tempdir().unwrap().into_path().to_str().unwrap());
 
-        ResizeImage::new(
+        ResizeImages::new(
             String::from("media"),
             tempdir.clone(),
             String::from("/www/moon/"),
@@ -329,7 +329,7 @@ mod tests {
     fn test_resize_one_file() {
         let tempdir = tempdir().unwrap().into_path().to_str().unwrap().to_string();
 
-        let mut new_images = ResizeImage::new(
+        let mut new_images = ResizeImages::new(
             String::from("media/paradise/fly.JPG"),
             tempdir.clone(),
             String::from("/www/moon/"),

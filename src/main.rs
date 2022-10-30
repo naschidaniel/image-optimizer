@@ -1,10 +1,10 @@
 mod command_parser;
 mod image_optimizer;
-mod resize_image;
+mod resize_images;
 
 use clap::Parser;
 use command_parser::Args;
-use resize_image::ResizeImage;
+use resize_images::ResizeImages;
 use std::fs;
 use std::io::Write;
 use std::time::Instant;
@@ -31,7 +31,7 @@ fn main() {
 
     let mut json_data = Vec::new();
     for (index, width) in args.widths.iter().enumerate() {
-        let mut new_images = ResizeImage::new(
+        let mut new_images = ResizeImages::new(
             args.source.to_owned(),
             args.destination.to_owned(),
             args.prefix.to_owned(),
