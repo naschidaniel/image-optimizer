@@ -20,10 +20,10 @@ pub struct Args {
     pub prefix: String,
 
     /// Sets the qualities of the optimized images: 90, 80
-    #[clap(short, long, multiple_values = true, required = true)]
+    #[clap(short, long, num_args(1..), required = true)]
     pub qualities: Vec<u8>,
 
     /// Sets the widths of the optimized images: 250 100
-    #[clap(short, long, multiple_values = true, required = true)]
+    #[clap(short, long, num_args(1..), required = true)]
     pub widths: Vec<u32>,
 }
