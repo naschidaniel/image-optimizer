@@ -132,7 +132,6 @@ impl ConvertImage {
 
 pub struct ResizeImages {
     pub destination_path: PathBuf,
-    pub destination: String,
     pub json: Vec<String>,
     pub quality: u8,
     pub source_path: PathBuf,
@@ -153,7 +152,6 @@ impl ResizeImages {
             source_path: fs::canonicalize(&source).unwrap(),
             source,
             destination_path: fs::canonicalize(&destination).unwrap(),
-            destination,
             width,
             prefix,
             quality,
