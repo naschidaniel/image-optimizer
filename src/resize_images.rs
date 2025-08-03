@@ -223,7 +223,7 @@ mod tests {
     /// The test checks if the metadata can be generated.
     #[test]
     fn test_new() {
-        let tempdir = tempdir().unwrap().into_path();
+        let tempdir = tempdir().unwrap().keep();
         let file_name_src = tempdir.join("spool/foo/bar/baz.JPG");
         fs::create_dir_all(&file_name_src.parent().unwrap()).unwrap();
         fs::copy("media/paradise/fly.JPG", &file_name_src).unwrap();
@@ -263,7 +263,7 @@ mod tests {
     /// The test checks if multiple files in multiple sub folders can be optimized.
     #[test]
     fn test_resize_images_in_folder() {
-        let tempdir = String::from(tempdir().unwrap().into_path().to_str().unwrap());
+        let tempdir = String::from(tempdir().unwrap().keep().to_str().unwrap());
 
         ResizeImages::new(
             String::from("media"),
@@ -325,7 +325,7 @@ mod tests {
     /// The test checks if one file can be optimized.
     #[test]
     fn test_resize_one_file() {
-        let tempdir = tempdir().unwrap().into_path().to_str().unwrap().to_string();
+        let tempdir = tempdir().unwrap().keep().to_str().unwrap().to_string();
 
         let mut new_images = ResizeImages::new(
             String::from("media/paradise/fly.JPG"),
